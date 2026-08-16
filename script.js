@@ -5,10 +5,7 @@ const SOUNDS = [
     { name: "Tingsha", desc: "Connection · 639 Hz", base: 639, dur: 3.8, partials: [{r:1,g:0.9},{r:2.80,g:0.55},{r:6.20,g:0.25}] },
     { name: "Koshi",   desc: "Awakening · 396 Hz",  base: 396, dur: 5.0, partials: [{r:1,g:1.0},{r:2.66,g:0.42},{r:3.98,g:0.20}] },
     { name: "Lotus",   desc: "Foundation · 285 Hz", base: 285, dur: 5.5, partials: [{r:1,g:1.0},{r:2.40,g:0.38},{r:5.10,g:0.14}] },
-    { name: "Aura",    desc: "Expression · 741 Hz", base: 741, dur: 3.6, partials: [{r:1,g:0.85},{r:2.90,g:0.50},{r:5.80,g:0.22}] },
     { name: "Prana",   desc: "Grounding · 174 Hz",  base: 174, dur: 6.0, partials: [{r:1,g:1.0},{r:2.20,g:0.35},{r:4.40,g:0.16}] },
-    { name: "Sol",     desc: "Intuition · 852 Hz",  base: 852, dur: 3.4, partials: [{r:1,g:0.8},{r:3.00,g:0.48},{r:6.50,g:0.20}] },
-    { name: "Luna",    desc: "Crown · 963 Hz",      base: 963, dur: 3.2, partials: [{r:1,g:0.75},{r:2.95,g:0.45},{r:7.00,g:0.18}] },
     { name: "Zenith",  desc: "Balance · 480 Hz",    base: 480, dur: 4.2, partials: [{r:1,g:1.0},{r:2.76,g:0.50},{r:5.00,g:0.20}] },
 ];
 
