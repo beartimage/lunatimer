@@ -1,0 +1,13 @@
+name = "lunatimer"
+compatibility_date = "2026-08-16"
+
+# Assemble the static site into ./dist before every deploy/dev run.
+[build]
+command = "node build.js"
+
+# Serve the built static site. SPA fallback returns index.html (200) for
+# unknown paths so client-side routes (/timer, /pomodoro, /timebox) resolve
+# on direct visits and refreshes.
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
