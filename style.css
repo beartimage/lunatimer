@@ -364,7 +364,7 @@ body::before {
 .progress-arc {
     fill: none;
     stroke: url(#goldGradient);
-    stroke-width: 6;
+    stroke-width: 9;
     stroke-linecap: round;
     stroke-dasharray: 628.3;
     stroke-dashoffset: 628.3;
