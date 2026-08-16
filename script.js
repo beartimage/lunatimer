@@ -385,6 +385,12 @@ const app = {
         this.state.intervalMarks = this.state.intervalMarks.filter(m => m < mins * 60);
         this.state.presetName = 'Meditation';
         this.updateDisplay();
+
+        // smooth ring: follow the finger's continuous angle instead of the snapped
+        // minute value, so the arc/knob glide rather than jump step-by-step
+        let frac = (this._accDeg % 360) / 360;
+        if (frac === 0 && this._accDeg > 0) frac = 1;
+        this.paintProgress(frac);
     },
 
     // convert a value in the given unit to seconds
