@@ -1318,10 +1318,13 @@ const timebox = {
                 <div class="tb-item-body">
                     <div class="tb-item-name">${this.esc(t.name)}</div>
                     <div class="tb-item-meta">${t.minutes} min · ${t.mode}</div>
-                </div>`;
+                </div>
+                <button class="tb-item-edit" title="Edit task" aria-label="Edit task"></button>`;
             row.onclick = () => this.pickTask(i);
             const chk = row.querySelector('.tb-check');
             chk.onclick = (e) => { e.stopPropagation(); this.toggleDone(i); };
+            const edit = row.querySelector('.tb-item-edit');
+            edit.onclick = (e) => { e.stopPropagation(); this.editFromList(i); };
             wrap.appendChild(row);
         });
     },
@@ -1411,9 +1414,16 @@ const timebox = {
         this.renderCount();
     },
 
-    // load a task into the form for editing
-    editTask(index) {
+    // jump straight from the main task list into editing a specific task
+    editFromList(index) {
         const t = this.state.tasks[index];
+        if (!t) return;
+        this.openTasks();      // switch to the editor screen (resets the form)
+        this.editTask(index);  // then load this task into the form
+    },
+
+    // load a task into the form for editing
+    editTask(index) {        const t = this.state.tasks[index];
         if (!t) return;
         this._editingId = t.id;
         document.getElementById('tb-in-name').value = t.name;
