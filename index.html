@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Timer">
+    <meta name="theme-color" content="#f4f0e6">
+    <title>Elegant Timer</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- ============ TIMER ============ -->
+        <div id="view-timer" class="view active">
+            <div class="header">
+                <button class="nav-btn" onclick="app.showPresets()">Presets</button>
+                <div class="title title-toggle" onclick="app.chooseMode()">Timer <span class="title-caret">&#9662;</span></div>
+                <button class="nav-btn" onclick="app.showSettings()">Sound</button>
+            </div>
+
+            <div class="timer-container" id="timer-container">
+                <div class="timer-face">
+                    <div class="preset-name" id="preset-name">Meditation</div>
+                    <div class="time-text" id="time-text">00:00</div>
+                    <div class="hint" id="hint">type to edit</div>
+                </div>
+
+                <svg class="timer-svg" viewBox="0 0 230 230">
+                    <defs>
+                        <linearGradient id="goldGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#b58d3c"/>
+                            <stop offset="50%" stop-color="#e6cd82"/>
+                            <stop offset="100%" stop-color="#8a6b23"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- faint full guide ring -->
+                    <circle class="guide" cx="115" cy="115" r="100"></circle>
+                    <!-- progress arc + knob on the same guide ring -->
+                    <circle id="progress-arc" class="progress-arc" cx="115" cy="115" r="100" transform="rotate(-90 115 115)"></circle>
+                    <circle id="progress-knob" class="progress-knob" cx="115" cy="15" r="8.5"></circle>
+                </svg>
+            </div>
+
+            <div class="controls">
+                <div class="control-item" onclick="app.cancel()">
+                    <div class="icon-circle"><div class="icon-cancel"></div></div>
+                    <span>Cancel</span>
+                </div>
+                <div class="control-item" id="btn-start" onclick="app.toggleTimer()">
+                    <div class="icon-circle">
+                        <div class="icon-play"></div>
+                        <div class="icon-pause"></div>
+                    </div>
+                    <span id="play-label">Start</span>
+                </div>
+                <div class="control-item" onclick="app.resetToTimer()">
+                    <div class="icon-circle"><div class="icon-reset"></div></div>
+                    <span>Reset</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ SET TIME / EDIT PRESET ============ -->
+        <div id="view-setup" class="view">
+            <div class="header">
+                <button class="nav-btn" onclick="app.showTimer()">&#8592; Back</button>
+                <div class="title" id="setup-title">Set Time</div>
+                <div style="width: 60px;"></div>
+            </div>
+            <div class="panel">
+                <div class="setup-form">
+                    <label class="edit-only">Preset name</label>
+                    <input class="edit-only" type="text" id="input-name" placeholder="Preset name">
+                    <label>Unit</label>
+                    <div class="unit-toggle" id="unit-toggle">
+                        <button type="button" class="unit-btn active" data-unit="min" onclick="app.setUnit('min')">Minutes</button>
+                        <button type="button" class="unit-btn" data-unit="sec" onclick="app.setUnit('sec')">Seconds</button>
+                    </div>
+                    <label id="label-duration">Duration (minutes)</label>
+                    <input type="number" id="input-duration" value="5" min="0" max="1440" inputmode="numeric">
+                    <label id="label-interval">Interval bells (minutes, comma-separated)</label>
+                    <input type="text" id="input-interval" value="" placeholder="e.g. 20, 40 (optional)" inputmode="text" autocapitalize="off" autocorrect="off">
+                    <button class="btn-primary" id="setup-btn" onclick="app.saveSetup()">Apply</button>
+                    <button class="btn-secondary new-only" id="setup-save-btn" onclick="app.saveSetupAsPreset()">Save as Preset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ PRESETS ============ -->
+        <div id="view-presets" class="view">
+            <div class="header">
+                <button class="nav-btn" onclick="app.showTimer()">&#8592; Back</button>
+                <div class="title">Presets</div>
+                <div style="width: 60px;"></div>
+            </div>
+            <div class="panel">
+                <div class="scroll-list" id="presets-list"></div>
+                <button class="btn-primary" onclick="app.addPreset()">+ Add Current as Preset</button>
+            </div>
+        </div>
+
+        <!-- ============ SOUND ============ -->
+        <div id="view-settings" class="view">
+            <div class="header">
+                <button class="nav-btn" onclick="app.showTimer()">&#8592; Back</button>
+                <div class="title">Alarm Sound</div>
+                <div style="width: 60px;"></div>
+            </div>
+            <div class="panel">
+                <div class="scroll-list" id="sounds-list"></div>
+            </div>
+        </div>
+
+        <!-- ============ COMPLETE ============ -->
+        <div id="view-complete" class="view">
+            <div class="completion-content">
+                <div class="check-mark"></div>
+                <h2>Complete</h2>
+                <button class="btn-primary" onclick="app.resetToTimer()">Back to Timer</button>
+            </div>
+        </div>
+
+        <!-- ============ POMODORO ============ -->
+        <div id="view-pomodoro" class="view">
+            <div class="header">
+                <button class="nav-btn" onclick="app.showTimer()">&#8592; Back</button>
+                <div class="title title-toggle" onclick="app.chooseMode()">Pomodoro <span class="title-caret">&#9662;</span></div>
+                <button class="nav-btn" onclick="pomodoro.openSettings()">Settings</button>
+            </div>
+
+            <div class="pomo-stage">
+                <div class="pomo-modes" id="pomo-modes">
+                    <span class="pomo-pill" data-m="work" onclick="pomodoro.pickMode('work')">Focus</span>
+                    <span class="pomo-pill" data-m="short" onclick="pomodoro.pickMode('short')">Short</span>
+                    <span class="pomo-pill" data-m="long" onclick="pomodoro.pickMode('long')">Long</span>
+                </div>
+
+                <div class="pomo-card" id="pomo-card">
+                    <div class="pomo-label" id="pomo-mode">Focus</div>
+                    <div class="pomo-clock" id="pomo-time">25:00</div>
+                    <div class="pomo-bar">
+                        <div class="pomo-bar-fill" id="pomo-bar-fill"></div>
+                    </div>
+                    <div class="pomo-dots" id="pomo-dots"></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="control-item" onclick="pomodoro.reset()">
+                    <div class="icon-circle"><div class="icon-reset"></div></div>
+                    <span>Reset</span>
+                </div>
+                <div class="control-item" id="pomo-start" onclick="pomodoro.toggle()">
+                    <div class="icon-circle">
+                        <div class="icon-play"></div>
+                        <div class="icon-pause"></div>
+                    </div>
+                    <span id="pomo-play-label">Start</span>
+                </div>
+                <div class="control-item" onclick="pomodoro.skip()">
+                    <div class="icon-circle"><div class="icon-skip"></div></div>
+                    <span>Skip</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ POMODORO SETTINGS ============ -->
+        <div id="view-pomo-settings" class="view">
+            <div class="header">
+                <button class="nav-btn" onclick="app.switchView('view-pomodoro')">&#8592; Back</button>
+                <div class="title">Pomodoro</div>
+                <div style="width: 60px;"></div>
+            </div>
+            <div class="panel">
+                <div class="scroll-list">
+                    <div class="setup-form">
+                        <label>Focus (minutes)</label>
+                        <input type="number" id="pomo-work" min="1" max="180" inputmode="numeric">
+                        <label>Short break (minutes)</label>
+                        <input type="number" id="pomo-short" min="1" max="120" inputmode="numeric">
+                        <label>Long break (minutes)</label>
+                        <input type="number" id="pomo-long" min="1" max="120" inputmode="numeric">
+                        <label>Long break after (focus sessions)</label>
+                        <input type="number" id="pomo-interval" min="1" max="12" inputmode="numeric">
+                    </div>
+                    <label class="pomo-sounds-label">Alarm sound</label>
+                    <div id="pomo-sounds"></div>
+                    <div class="pomo-stats" id="pomo-stats"></div>
+                </div>
+                <button class="btn-primary" onclick="pomodoro.saveSettings()">Save</button>
+                <button class="btn-secondary" onclick="pomodoro.resetStats()">Reset Stats</button>
+            </div>
+        </div>
+
+        <!-- ============ TIMEBOX ============ -->
+        <div id="view-timebox" class="view">
+            <div class="header">
+                <button class="nav-btn" onclick="app.showTimer()">&#8592; Back</button>
+                <div class="title title-toggle" onclick="app.chooseMode()">Timebox <span class="title-caret">&#9662;</span></div>
+                <button class="nav-btn" onclick="timebox.openTasks()">Tasks</button>
+            </div>
+
+            <div class="pomo-stage tb-stage">
+                <div class="pomo-card" id="tb-card">
+                    <div class="tb-task-row">
+                        <div class="pomo-label" id="tb-name">No task</div>
+                        <span class="tb-badge" id="tb-badge">Hard</span>
+                    </div>
+                    <div class="pomo-clock" id="tb-time">25:00</div>
+                    <div class="pomo-bar"><div class="pomo-bar-fill" id="tb-bar-fill"></div></div>
+                    <div class="tb-count" id="tb-count"></div>
+
+                    <!-- soft-timebox overtime prompt -->
+                    <div class="tb-overtime" id="tb-overtime">
+                        <div class="tb-overtime-label">Time's up &mdash; a little longer?</div>
+                        <div class="tb-overtime-btns">
+                            <button class="tb-ext" onclick="timebox.extend(5)">+5 min</button>
+                            <button class="tb-ext" onclick="timebox.extend(10)">+10 min</button>
+                            <button class="tb-ext tb-ext-done" onclick="timebox.finishTask()">Complete</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tb-list" id="tb-list"></div>
+            </div>
+
+            <div class="controls">
+                <div class="control-item" onclick="timebox.reset()">
+                    <div class="icon-circle"><div class="icon-reset"></div></div>
+                    <span>Reset</span>
+                </div>
+                <div class="control-item" id="tb-start" onclick="timebox.toggle()">
+                    <div class="icon-circle">
+                        <div class="icon-play"></div>
+                        <div class="icon-pause"></div>
+                    </div>
+                    <span id="tb-play-label">Start</span>
+                </div>
+                <div class="control-item" onclick="timebox.next()">
+                    <div class="icon-circle"><div class="icon-skip"></div></div>
+                    <span>Next</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ TIMEBOX TASKS ============ -->
+        <div id="view-timebox-tasks" class="view">
+            <div class="header">
+                <button class="nav-btn" onclick="timebox.open()">&#8592; Back</button>
+                <div class="title">Tasks</div>
+                <div style="width: 60px;"></div>
+            </div>
+            <div class="panel">
+                <div class="scroll-list">
+                    <div class="setup-form">
+                        <label>Task name</label>
+                        <input type="text" id="tb-in-name" placeholder="e.g. Write report" autocapitalize="sentences" autocorrect="off">
+                        <label>Minutes</label>
+                        <input type="number" id="tb-in-min" value="25" min="1" max="600" inputmode="numeric">
+                        <label>Type</label>
+                        <div class="unit-toggle" id="tb-mode-toggle">
+                            <button type="button" class="unit-btn active" data-mode="hard" onclick="timebox.setAddMode('hard')">Hard</button>
+                            <button type="button" class="unit-btn" data-mode="soft" onclick="timebox.setAddMode('soft')">Soft</button>
+                        </div>
+                        <div class="tb-mode-hint" id="tb-mode-hint">Hard: stop the moment time runs out.</div>
+                        <button class="btn-primary" id="tb-add-btn" onclick="timebox.addTask()">+ Add Task</button>
+                        <button class="btn-secondary" id="tb-cancel-edit" style="display:none;" onclick="timebox.cancelEdit()">Cancel Edit</button>
+                    </div>
+                    <div class="tb-editlist" id="tb-editlist"></div>
+                    <label class="pomo-sounds-label">Alarm sound</label>
+                    <div id="tb-sounds"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ MODAL (prompt / confirm / alert) ============ -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal" role="dialog" aria-modal="true">
+            <div class="modal-title" id="modal-title">Title</div>
+            <div class="modal-message" id="modal-message"></div>
+            <input class="modal-input" id="modal-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off">
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="modal-cancel">Cancel</button>
+                <button class="modal-btn modal-ok" id="modal-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ MODE CHOOSER ============ -->
+    <div id="chooser-overlay" class="modal-overlay">
+        <div class="modal modal-compact" role="dialog" aria-modal="true">
+            <div class="modal-title">Choose Timer</div>
+            <button class="choose-card" onclick="app.pickMeditation()">Meditation</button>
+            <button class="choose-card" onclick="app.pickPomodoro()">Pomodoro</button>
+            <button class="choose-card" onclick="app.pickTimebox()">Timebox</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then((reg) => {
+                    reg.update();
+                    let refreshing = false;
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        if (refreshing) return;
+                        refreshing = true;
+                        window.location.reload();
+                    });
+                    reg.addEventListener('updatefound', () => {
+                        const nw = reg.installing;
+                        if (!nw) return;
+                        nw.addEventListener('statechange', () => {
+                            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                                nw.postMessage && nw.postMessage('skip-waiting');
+                            }
+                        });
+                    });
+                }).catch(() => {});
+            });
+        }
+    </script>
+</body>
+</html>
