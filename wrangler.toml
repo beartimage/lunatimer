@@ -2,13 +2,21 @@ name = "lunatimer"
 account_id = "a0b7ae579ae51cc0607daa0a59686331"
 compatibility_date = "2026-08-16"
 
+# Worker entry: content negotiation (Markdown for Agents) + small JSON API,
+# sitting in front of the static site.
+main = "worker.js"
+
 # Assemble the static site into ./dist before every deploy/dev run.
 [build]
 command = "node build.js"
 
 # Serve the built static site. SPA fallback returns index.html (200) for
 # unknown paths so client-side routes (/timer, /pomodoro, /timebox) resolve
-# on direct visits and refreshes.
+# on direct visits and refreshes. `binding` lets the Worker fetch assets;
+# `run_worker_first` lets the Worker inspect every request (e.g. the Accept
+# header on "/") before assets are served.
 [assets]
 directory = "./dist"
+binding = "ASSETS"
 not_found_handling = "single-page-application"
+run_worker_first = true

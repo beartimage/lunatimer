@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>lunatimer API — Documentation</title>
+    <meta name="description" content="Documentation for the lunatimer machine-readable API: health/status endpoint and Markdown-for-Agents content negotiation.">
+    <link rel="canonical" href="https://lunatimer.app/api-docs.html">
+    <style>
+        body { max-width: 720px; margin: 0 auto; padding: 32px 20px 64px;
+               font-family: -apple-system, 'Segoe UI', sans-serif; color: #423a24;
+               background: #f5f1e8; line-height: 1.6; }
+        h1 { font-weight: 600; letter-spacing: 0.5px; }
+        h2 { margin-top: 2em; border-bottom: 1px solid rgba(66,58,36,0.15); padding-bottom: 6px; }
+        code { background: rgba(66,58,36,0.08); padding: 2px 6px; border-radius: 6px; font-size: 0.92em; }
+        pre { background: #fbf8f0; border: 1px solid rgba(66,58,36,0.14); border-radius: 12px;
+              padding: 16px; overflow-x: auto; }
+        a { color: #8a6b23; }
+        table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+        th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(66,58,36,0.14); }
+    </style>
+</head>
+<body>
+    <h1>lunatimer API</h1>
+    <p>lunatimer is a client-side timer app. Its machine-readable surface is intentionally small: a
+       health/status endpoint and <strong>Markdown for Agents</strong> content negotiation on the
+       public pages.</p>
+    <p>Machine spec (OpenAPI 3.1): <a href="/openapi.json">/openapi.json</a> ·
+       Catalog (RFC 9727): <a href="/.well-known/api-catalog">/.well-known/api-catalog</a></p>
+
+    <h2>Health / status</h2>
+    <p><code>GET /api/health</code> → <code>application/json</code></p>
+    <pre>{ "status": "ok", "service": "lunatimer" }</pre>
+
+    <h2>Markdown for Agents</h2>
+    <p>Every public page returns HTML by default. Send <code>Accept: text/markdown</code> to receive a
+       clean, formatting-stripped markdown representation instead.</p>
+    <pre>curl -H "Accept: text/markdown" https://lunatimer.app/</pre>
+    <table>
+        <tr><th>Path</th><th>Content</th></tr>
+        <tr><td><code>/</code></td><td>Overview + links to each timer</td></tr>
+        <tr><td><code>/timer</code></td><td>Meditation timer</td></tr>
+        <tr><td><code>/pomodoro</code></td><td>Pomodoro focus/break cycles</td></tr>
+        <tr><td><code>/timebox</code></td><td>Time-blocked task list</td></tr>
+    </table>
+    <p>HTML responses for these paths also carry a
+       <code>Link: &lt;…&gt;; rel="alternate"; type="text/markdown"</code> header advertising the
+       markdown alternative, and <code>Vary: Accept</code> for correct caching.</p>
+</body>
+</html>

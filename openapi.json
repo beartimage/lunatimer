@@ -1,0 +1,118 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "lunatimer API",
+    "version": "1.0.0",
+    "description": "Machine-readable surface for lunatimer: a health/status endpoint and Markdown-for-Agents content negotiation on the public pages. lunatimer itself is a client-side timer app; these are the only server endpoints.",
+    "contact": { "name": "lunatimer", "url": "https://lunatimer.app/" },
+    "license": { "name": "Proprietary" }
+  },
+  "servers": [{ "url": "https://lunatimer.app" }],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Service health/status",
+        "description": "Returns the current service status. Referenced by the RFC 9727 API catalog `status` relation.",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["status"],
+                  "properties": {
+                    "status": { "type": "string", "enum": ["ok"] },
+                    "service": { "type": "string" }
+                  }
+                },
+                "example": { "status": "ok", "service": "lunatimer" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "operationId": "getHomeContent",
+        "summary": "Home page (content-negotiated)",
+        "description": "Returns HTML for browsers, or a clean markdown representation when the request sends `Accept: text/markdown`.",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Send `text/markdown` to receive markdown instead of HTML.",
+            "example": "text/markdown"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page content",
+            "content": {
+              "text/html": { "schema": { "type": "string" } },
+              "text/markdown": { "schema": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "/timer": {
+      "get": {
+        "operationId": "getTimerContent",
+        "summary": "Meditation timer page (content-negotiated)",
+        "parameters": [
+          { "name": "Accept", "in": "header", "required": false, "schema": { "type": "string" }, "example": "text/markdown" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page content",
+            "content": {
+              "text/html": { "schema": { "type": "string" } },
+              "text/markdown": { "schema": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "/pomodoro": {
+      "get": {
+        "operationId": "getPomodoroContent",
+        "summary": "Pomodoro page (content-negotiated)",
+        "parameters": [
+          { "name": "Accept", "in": "header", "required": false, "schema": { "type": "string" }, "example": "text/markdown" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page content",
+            "content": {
+              "text/html": { "schema": { "type": "string" } },
+              "text/markdown": { "schema": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "/timebox": {
+      "get": {
+        "operationId": "getTimeboxContent",
+        "summary": "Timebox page (content-negotiated)",
+        "parameters": [
+          { "name": "Accept", "in": "header", "required": false, "schema": { "type": "string" }, "example": "text/markdown" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page content",
+            "content": {
+              "text/html": { "schema": { "type": "string" } },
+              "text/markdown": { "schema": { "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -18,6 +18,8 @@ const FILES = [
   'manifest.json',
   'robots.txt',
   'sitemap.xml',
+  'openapi.json',
+  'api-docs.html',
   'icon.svg',
   'icon-192.png',
   'icon-512.png',
