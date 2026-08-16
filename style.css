@@ -240,11 +240,10 @@ body::before {
     transition: none;
 }
 .progress-knob {
-    fill: url(#knobGradient);
-    stroke: rgba(138, 107, 35, 0.55);
-    stroke-width: 1;
-    r: 7;
-    filter: drop-shadow(0 1px 2.5px rgba(66, 58, 36, 0.28));
+    fill: #c9a24a;
+    stroke: none;
+    r: 6.5;
+    filter: none;
 }
 
 /* ---------- Controls ---------- */
