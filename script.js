@@ -129,9 +129,51 @@ const app = {
         ov.onclick = (e) => { if (e.target === ov) this.closeChooser(); };
     },
     closeChooser() { document.getElementById('chooser-overlay').classList.remove('open'); },
-    pickMeditation() { this.closeChooser(); if (pomodoro.state.isRunning) pomodoro.pause(); if (timebox.state.isRunning) timebox.pause(); this.showTimer(); },
-    pickPomodoro()   { this.closeChooser(); if (this.state.isRunning) this.pauseTimer(); if (timebox.state.isRunning) timebox.pause(); pomodoro.open(); },
-    pickTimebox()    { this.closeChooser(); if (this.state.isRunning) this.pauseTimer(); if (pomodoro.state.isRunning) pomodoro.pause(); timebox.open(); },
+    pickMeditation() { this.goMode('meditation'); },
+    pickPomodoro()   { this.goMode('pomodoro'); },
+    pickTimebox()    { this.goMode('timebox'); },
+
+    // ---- Routing: /timer, /pomodoro, /timebox map to the three timers ----
+    _pathForMode(mode) {
+        return mode === 'pomodoro' ? '/pomodoro' : mode === 'timebox' ? '/timebox' : '/timer';
+    },
+    _modeForPath(pathname) {
+        const p = (pathname || '/').replace(/\/+$/, '') || '/';
+        if (p === '/pomodoro') return 'pomodoro';
+        if (p === '/timebox') return 'timebox';
+        return 'meditation'; // '/' and '/timer' both land on the meditation timer
+    },
+    // open the given timer's view (no history change)
+    _openMode(mode) {
+        this.closeChooser();
+        if (mode === 'pomodoro') {
+            if (this.state.isRunning) this.pauseTimer();
+            if (timebox.state.isRunning) timebox.pause();
+            pomodoro.open();
+        } else if (mode === 'timebox') {
+            if (this.state.isRunning) this.pauseTimer();
+            if (pomodoro.state.isRunning) pomodoro.pause();
+            timebox.open();
+        } else {
+            if (pomodoro.state.isRunning) pomodoro.pause();
+            if (timebox.state.isRunning) timebox.pause();
+            this.showTimer();
+        }
+        this._mode = mode;
+    },
+    // switch timer AND push a new URL (used by the chooser)
+    goMode(mode) {
+        this._openMode(mode);
+        const path = this._pathForMode(mode);
+        if (location.pathname !== path) history.pushState({ mode }, '', path);
+    },
+    // called once on load: open the view for the current URL + handle back/forward
+    initRouter() {
+        const mode = this._modeForPath(location.pathname);
+        history.replaceState({ mode }, '', this._pathForMode(mode)); // normalise '/' -> '/timer'
+        this._openMode(mode);
+        window.addEventListener('popstate', () => this._openMode(this._modeForPath(location.pathname)));
+    },
 
     // ---- Timer ----
     toggleTimer() {
@@ -1605,3 +1647,6 @@ const timebox = {
 };
 
 timebox.load();
+
+// wire up deep-link routing now that all three timers exist
+app.initRouter();

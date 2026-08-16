@@ -1,0 +1,5 @@
+# SPA fallback for Cloudflare Pages.
+# Existing static files (style.css, script.js, icons, sw.js, manifest.json)
+# are served first; any other path falls back to the app shell so client-side
+# routes (/timer, /pomodoro, /timebox) resolve on direct visits and refreshes.
+/*    /index.html    200
