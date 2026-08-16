@@ -1491,32 +1491,45 @@ const timebox = {
     },
 
     // ---- drag-to-reorder (mouse + touch via pointer events) ----
+    // Listeners live on `document` (NOT the row) so reparenting the row mid-drag
+    // can't drop a pointer capture and kill the gesture.
     _dragStart(e) {
         if (e.pointerType === 'mouse' && e.button !== 0) return;
-        e.preventDefault();
-        const list = document.getElementById('tb-editlist');
         const row = e.target.closest('.tb-edit-item');
         if (!row) return;
-        const pid = e.pointerId;
+        e.preventDefault();
+        const list = document.getElementById('tb-editlist');
+        const scroller = list.closest('.scroll-list');
         row.classList.add('dragging');
-        try { row.setPointerCapture(pid); } catch (_) {}
+        if (scroller) scroller.classList.add('tb-noscroll');
+
+        const follow = (clientY) => {
+            row.style.transform = 'none';                 // measure at rest
+            const box = row.getBoundingClientRect();
+            const dy = clientY - (box.top + box.height / 2);
+            row.style.transform = `translateY(${dy}px) scale(1.02)`;
+        };
 
         const onMove = (ev) => {
+            ev.preventDefault();
             const after = this._dragAfter(list, ev.clientY);
             if (after == null) { if (list.lastElementChild !== row) list.appendChild(row); }
             else if (after !== row) list.insertBefore(row, after);
+            follow(ev.clientY);
         };
         const onEnd = () => {
+            row.style.transform = '';
             row.classList.remove('dragging');
-            try { row.releasePointerCapture(pid); } catch (_) {}
-            row.removeEventListener('pointermove', onMove);
-            row.removeEventListener('pointerup', onEnd);
-            row.removeEventListener('pointercancel', onEnd);
+            if (scroller) scroller.classList.remove('tb-noscroll');
+            document.removeEventListener('pointermove', onMove);
+            document.removeEventListener('pointerup', onEnd);
+            document.removeEventListener('pointercancel', onEnd);
             this._commitOrder();
         };
-        row.addEventListener('pointermove', onMove);
-        row.addEventListener('pointerup', onEnd);
-        row.addEventListener('pointercancel', onEnd);
+        document.addEventListener('pointermove', onMove, { passive: false });
+        document.addEventListener('pointerup', onEnd);
+        document.addEventListener('pointercancel', onEnd);
+        follow(e.clientY);
     },
 
     _dragAfter(list, y) {

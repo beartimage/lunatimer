@@ -836,10 +836,14 @@ body::before {
     transition: box-shadow 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 .tb-edit-item.dragging {
-    opacity: 0.92;
+    position: relative;
+    z-index: 5;
+    opacity: 0.96;
     border-color: rgba(181, 141, 60, 0.55);
-    box-shadow: 0 12px 28px rgba(66, 58, 36, 0.18);
+    box-shadow: 0 14px 30px rgba(66, 58, 36, 0.22);
 }
+/* freeze the scroll container while a card is being dragged */
+.scroll-list.tb-noscroll { overflow: hidden !important; touch-action: none; }
 .tb-edit-item.editing {
     border-color: rgba(181, 141, 60, 0.55);
     background: linear-gradient(135deg, rgba(230, 205, 130, 0.16), rgba(157, 176, 160, 0.12));
