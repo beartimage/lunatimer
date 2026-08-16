@@ -1,4 +1,5 @@
 name = "lunatimer"
+account_id = "a0b7ae579ae51cc0607daa0a59686331"
 compatibility_date = "2026-08-16"
 
 # Assemble the static site into ./dist before every deploy/dev run.

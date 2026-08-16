@@ -17,7 +17,6 @@ const FILES = [
   'icon-192.png',
   'icon-512.png',
   'apple-touch-icon.png',
-  '_redirects',
 ];
 
 fs.rmSync(DIST, { recursive: true, force: true });
