@@ -679,8 +679,8 @@ body::before {
 .tb-stage {
     justify-content: flex-start;
     overflow: hidden;
-    gap: 16px;
-    padding-top: 28px;
+    gap: clamp(10px, 1.6vh, 16px);
+    padding-top: clamp(12px, 2vh, 26px);
 }
 .tb-stage #tb-card { flex: 0 0 auto; width: 100%; }
 .tb-stage .tb-list {
@@ -691,18 +691,18 @@ body::before {
     width: 100%;
     padding: 2px 2px 4px;
 }
-/* same card as before, just more compact */
-#tb-card { padding: 26px 26px 24px; }
-#tb-card .pomo-clock { font-size: clamp(46px, 15vw, 72px); }
-#tb-card .pomo-clock.t-long  { font-size: clamp(38px, 12vw, 58px); }
-#tb-card .pomo-clock.t-xlong { font-size: clamp(32px, 10vw, 50px); }
-#tb-card .pomo-bar { margin-top: 18px; }
+/* compact card: viewport-aware sizing so it fits every phone and leaves room for 4 tasks */
+#tb-card { padding: clamp(14px, 2.4vh, 22px) 24px clamp(13px, 2vh, 20px); }
+#tb-card .pomo-clock { font-size: clamp(34px, min(12vw, 8vh), 60px); }
+#tb-card .pomo-clock.t-long  { font-size: clamp(28px, min(9.5vw, 6.5vh), 48px); }
+#tb-card .pomo-clock.t-xlong { font-size: clamp(24px, min(8vw, 5.5vh), 42px); }
+#tb-card .pomo-bar { margin-top: clamp(10px, 1.6vh, 16px); }
 .tb-task-row {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin-bottom: 12px;
+    margin-bottom: clamp(6px, 1vh, 10px);
 }
 .tb-task-row .pomo-label { margin-bottom: 0; }
 .tb-badge {
@@ -717,7 +717,7 @@ body::before {
 .tb-badge.hard { color: var(--terra); background: rgba(201, 138, 115, 0.14); border: 1px solid rgba(201, 138, 115, 0.4); }
 .tb-badge.soft { color: #5f7a63; background: rgba(157, 176, 160, 0.18); border: 1px solid rgba(157, 176, 160, 0.5); }
 .tb-count {
-    margin-top: 14px;
+    margin-top: clamp(8px, 1.4vh, 14px);
     font-size: 11px;
     letter-spacing: 1.4px;
     text-transform: uppercase;
@@ -755,12 +755,12 @@ body::before {
 }
 
 /* main-view task list */
-.tb-list { width: 100%; display: flex; flex-direction: column; gap: 9px; }
+.tb-list { width: 100%; display: flex; flex-direction: column; gap: clamp(7px, 1.1vh, 9px); }
 .tb-item {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 15px;
+    padding: clamp(9px, 1.5vh, 12px) 15px;
     background: var(--cream);
     border: 1px solid var(--line);
     border-radius: 14px;
@@ -1021,6 +1021,7 @@ body::before {
     .pomo-stage { gap: 16px; }
     .pomo-card { padding: 28px 26px 24px; }
     .pomo-clock { font-size: clamp(48px, 16vw, 78px); }
+    #tb-card { padding: 14px 22px 13px; }
 }
 @media (max-height: 560px) {
     :root { --dial: min(250px, 60vw, 46vh); }
@@ -1029,4 +1030,21 @@ body::before {
     .pomo-clock { font-size: clamp(40px, 13vw, 60px); }
     .pomo-bar { margin-top: 16px; }
     .pomo-dots { margin-top: 14px; }
+    #tb-card { padding: 12px 20px 12px; border-radius: 24px; }
+    #tb-card .pomo-bar { margin-top: 10px; }
+}
+
+/* ---------- Narrow phones ---------- */
+@media (max-width: 400px) {
+    .panel { padding-left: 18px; padding-right: 18px; }
+    #tb-card { padding-left: 18px; padding-right: 18px; }
+    .tb-item { padding-left: 13px; padding-right: 13px; gap: 10px; }
+    .tb-item-name { font-size: 14.5px; }
+    .controls { gap: 10px; }
+}
+@media (max-width: 340px) {
+    .panel { padding-left: 14px; padding-right: 14px; }
+    .tb-item { padding-left: 11px; padding-right: 11px; }
+    .tb-item-name { font-size: 14px; }
+    .tb-badge { font-size: 9px; }
 }
