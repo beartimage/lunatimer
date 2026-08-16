@@ -16,7 +16,7 @@
     --gold-a:   #b58d3c;
     --gold-b:   #e6cd82;
     --gold-c:   #8a6b23;
-    --dial: min(340px, 84vw, 44vh);
+    --dial: min(300px, 76vw, 40vh);
 }
 
 * {
@@ -271,6 +271,7 @@ body::before {
 .nav-btn:active { color: var(--gold-c); transform: scale(0.96); }
 
 /* ---------- Timer visual ---------- */
+/* A solid, filled gold band (the track) with a cream disc floating in the middle. */
 .timer-container {
     flex: 0 0 auto;
     width: var(--dial);
@@ -282,23 +283,30 @@ body::before {
     align-items: center;
     cursor: pointer;
     touch-action: none;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 34%, var(--gold-b) 0%, var(--gold-a) 58%, var(--gold-c) 100%);
+    box-shadow:
+        0 18px 40px rgba(66, 58, 36, 0.22),
+        inset 0 2px 5px rgba(255, 255, 255, 0.5),
+        inset 0 -5px 12px rgba(138, 107, 35, 0.45);
 }
 
 .timer-face {
     position: relative;
     z-index: 2;
-    width: 79%;
-    height: 79%;
+    width: 66%;
+    height: 66%;
     background: radial-gradient(120% 120% at 50% 0%, var(--cream) 0%, #f2ede1 100%);
-    border: 1px solid rgba(181, 141, 60, 0.28);
     border-radius: 50%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    /* recessed into the gold band */
     box-shadow:
-        0 22px 50px rgba(66, 58, 36, 0.14),
-        inset 0 1px 3px rgba(255, 255, 255, 0.9);
+        0 0 0 1px rgba(138, 107, 35, 0.3),
+        inset 0 3px 8px rgba(66, 58, 36, 0.16),
+        0 10px 22px rgba(66, 58, 36, 0.20);
 }
 
 .preset-name {
@@ -312,7 +320,7 @@ body::before {
 }
 
 .time-text {
-    font-size: calc(var(--dial) * 0.16);
+    font-size: calc(var(--dial) * 0.15);
     font-weight: 400;
     letter-spacing: 0.02em;
     z-index: 5;
@@ -329,8 +337,8 @@ body::before {
 }
 #time-text:active { opacity: 0.7; }
 /* keep long clocks (H:MM:SS / HH:MM:SS) inside the disc */
-.time-text.t-long  { font-size: calc(var(--dial) * 0.118); letter-spacing: 0; }
-.time-text.t-xlong { font-size: calc(var(--dial) * 0.103); letter-spacing: 0; }
+.time-text.t-long  { font-size: calc(var(--dial) * 0.108); letter-spacing: 0; }
+.time-text.t-xlong { font-size: calc(var(--dial) * 0.094); letter-spacing: 0; }
 
 .hint {
     margin-top: 4%;
@@ -344,7 +352,7 @@ body::before {
     max-width: 100%;
 }
 
-/* progress ring overlay — concentric with the whole dial */
+/* progress ring overlay — rides on the gold band as a bright cream indicator */
 .timer-svg {
     position: absolute;
     left: 50%;
@@ -358,25 +366,25 @@ body::before {
 }
 .guide {
     fill: none;
-    stroke: rgba(181, 141, 60, 0.32);
+    stroke: rgba(138, 107, 35, 0.28);
     stroke-width: 1;
 }
 .progress-arc {
     fill: none;
-    stroke: url(#goldGradient);
+    stroke: rgba(255, 251, 240, 0.92);
     stroke-width: 6;
     stroke-linecap: round;
     stroke-dasharray: 628.3;
     stroke-dashoffset: 628.3;
-    filter: drop-shadow(0 3px 5px rgba(66, 58, 36, 0.28));
+    filter: drop-shadow(0 2px 4px rgba(66, 58, 36, 0.35));
     transition: none;
 }
 .progress-knob {
-    fill: var(--cream);
-    stroke: url(#goldGradient);
-    stroke-width: 4;
+    fill: #fffdf7;
+    stroke: var(--gold-c);
+    stroke-width: 3;
     r: 8.5;
-    filter: drop-shadow(0 2px 4px rgba(66, 58, 36, 0.4));
+    filter: drop-shadow(0 2px 4px rgba(66, 58, 36, 0.45));
 }
 
 /* ---------- Controls ---------- */
@@ -1180,7 +1188,7 @@ body::before {
 
 /* ---------- Short screens ---------- */
 @media (max-height: 700px) {
-    :root { --dial: min(310px, 78vw, 40vh); }
+    :root { --dial: min(272px, 70vw, 37vh); }
     .controls { padding-top: 10px; }
     .panel { padding-top: 16px; }
     .pomo-stage { gap: 16px; }
@@ -1189,7 +1197,7 @@ body::before {
     #tb-card { padding: 14px 22px 13px; }
 }
 @media (max-height: 560px) {
-    :root { --dial: min(250px, 60vw, 46vh); }
+    :root { --dial: min(224px, 56vw, 42vh); }
     .pomo-stage { gap: 12px; }
     .pomo-card { padding: 20px 22px 18px; border-radius: 24px; }
     .pomo-clock { font-size: clamp(40px, 13vw, 60px); }
