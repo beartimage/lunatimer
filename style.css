@@ -373,8 +373,7 @@ body::before {
 }
 .progress-knob {
     fill: url(#goldGradient);
-    stroke: var(--gold-c);
-    stroke-width: 1.5;
+    stroke: none;
     r: 7;
     filter: drop-shadow(0 2px 3px rgba(66, 58, 36, 0.4));
 }
