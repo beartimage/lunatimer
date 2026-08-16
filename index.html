@@ -306,25 +306,13 @@
 
     <script src="script.js"></script>
     <script>
+        // Register the service worker for offline use.
+        // NOTE: we intentionally do NOT auto-reload on update — a forced reload
+        // would wipe a running timer. New versions apply on the next launch.
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').then((reg) => {
                     reg.update();
-                    let refreshing = false;
-                    navigator.serviceWorker.addEventListener('controllerchange', () => {
-                        if (refreshing) return;
-                        refreshing = true;
-                        window.location.reload();
-                    });
-                    reg.addEventListener('updatefound', () => {
-                        const nw = reg.installing;
-                        if (!nw) return;
-                        nw.addEventListener('statechange', () => {
-                            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-                                nw.postMessage && nw.postMessage('skip-waiting');
-                            }
-                        });
-                    });
                 }).catch(() => {});
             });
         }
