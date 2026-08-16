@@ -21,6 +21,7 @@ const FILES = [
   'openapi.json',
   'api-docs.html',
   'icon.svg',
+  'favicon.ico',
   'icon-192.png',
   'icon-512.png',
   'apple-touch-icon.png',

@@ -1,4 +1,4 @@
-const CACHE = 'elegant-timer-v12';
+const CACHE = 'elegant-timer-v13';
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
   './manifest.json',
   './robots.txt',
   './sitemap.xml',
+  './favicon.ico',
   './icon.svg',
   './icon-192.png',
   './icon-512.png',
