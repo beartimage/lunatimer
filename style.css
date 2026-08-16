@@ -801,7 +801,9 @@ body::before {
     opacity: 0.5;
     cursor: pointer;
     transition: opacity 0.2s ease, transform 0.15s ease;
+    display: none;
 }
+.tb-item.active .tb-item-edit { display: block; }
 .tb-item-edit:hover { opacity: 1; }
 .tb-item-edit:active { transform: scale(0.88); }
 .tb-item-name {
