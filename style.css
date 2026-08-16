@@ -58,6 +58,9 @@ body::before {
     max-width: 440px;
     height: 100vh;
     height: 100dvh;
+    /* --app-h is kept in sync with window.visualViewport so the layout shrinks
+       when the on-screen keyboard opens, instead of being pushed underneath it */
+    height: var(--app-h, 100dvh);
     position: relative;
     overflow: hidden;
     overscroll-behavior: none;
@@ -464,6 +467,11 @@ body::before {
     flex-direction: column;
     padding-top: 22px;
     min-height: 0;
+    /* scroll the whole panel when the keyboard shrinks the viewport so the
+       Apply / Save buttons never end up hidden under the keyboard */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
 
 .setup-form { display: flex; flex-direction: column; gap: 16px; }

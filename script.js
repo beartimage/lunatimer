@@ -1702,3 +1702,32 @@ timebox.load();
 
 // wire up deep-link routing now that all three timers exist
 app.initRouter();
+
+// ---- Keep the layout sized to the visible viewport (on-screen keyboard aware) ----
+// On iOS/Android the software keyboard does NOT shrink the layout viewport, so a
+// fixed 100dvh #app would push its Apply/Save buttons underneath the keyboard.
+// Mirroring window.visualViewport.height into --app-h makes the flex layout recompute
+// to the visible area, and the scrollable .panel keeps every field reachable.
+(function () {
+    const root = document.documentElement;
+    const vv = window.visualViewport;
+    function sync() {
+        const h = vv ? vv.height : window.innerHeight;
+        root.style.setProperty('--app-h', h + 'px');
+    }
+    sync();
+    if (vv) {
+        vv.addEventListener('resize', sync);
+        vv.addEventListener('scroll', sync);
+    }
+    window.addEventListener('orientationchange', () => setTimeout(sync, 300));
+    // once the keyboard has settled, scroll the focused field into the visible area
+    document.addEventListener('focusin', (e) => {
+        if (e.target && e.target.matches('input, textarea')) {
+            setTimeout(() => {
+                sync();
+                try { e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (_) {}
+            }, 300);
+        }
+    });
+})();
