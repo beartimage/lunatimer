@@ -8,6 +8,15 @@
 
 const SITE = 'https://lunatimer.app';
 
+// RFC 8288 / RFC 9727 §3 discovery links advertised on HTML page responses.
+// Root-relative per the RFC examples; agents resolve them against the request URL.
+const DISCOVERY_LINKS = [
+  '</.well-known/api-catalog>; rel="api-catalog"',
+  '</openapi.json>; rel="service-desc"; type="application/vnd.oai.openapi+json"',
+  '</api-docs.html>; rel="service-doc"; type="text/html"',
+  '</openapi.json>; rel="describedby"; type="application/vnd.oai.openapi+json"',
+];
+
 // Clean markdown per public route. Kept in sync with the HTML pages.
 const PAGES = {
   '/': {
@@ -149,11 +158,16 @@ export default {
     // Default: serve the static site (HTML for browsers, plus all assets).
     const resp = await env.ASSETS.fetch(request);
 
-    // Advertise that HTML pages also have a markdown representation.
+    // Advertise the markdown alternative + machine-readable discovery links.
     if (page) {
       const headers = new Headers(resp.headers);
       headers.append('Vary', 'Accept');
-      headers.set('Link', `<${SITE}${path === '/' ? '/' : path}>; rel="alternate"; type="text/markdown"`);
+      const links = [
+        `<${path === '/' ? '/' : path}>; rel="alternate"; type="text/markdown"`,
+        ...DISCOVERY_LINKS,
+      ];
+      // one comma-separated Link header (RFC 8288 §3) — also valid as multiple
+      headers.set('Link', links.join(', '));
       return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers });
     }
     return resp;
