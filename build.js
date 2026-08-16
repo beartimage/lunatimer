@@ -7,12 +7,17 @@ const ROOT = __dirname;
 const DIST = path.join(ROOT, 'dist');
 
 // The files that make up the deployable app (source lives at the repo root).
+// NOTE: minification is intentionally left to Cloudflare (Auto-Minify / brotli)
+// or a real bundler (esbuild / lightningcss) — a hand-rolled minifier would
+// corrupt the regex literals in script.js and the data-URI SVG masks in style.css.
 const FILES = [
   'index.html',
   'style.css',
   'script.js',
   'sw.js',
   'manifest.json',
+  'robots.txt',
+  'sitemap.xml',
   'icon.svg',
   'icon-192.png',
   'icon-512.png',

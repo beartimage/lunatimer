@@ -1,10 +1,13 @@
-const CACHE = 'elegant-timer-v2';
+const CACHE = 'elegant-timer-v3';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './script.js',
   './manifest.json',
+  './robots.txt',
+  './sitemap.xml',
+  './icon.svg',
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png'

@@ -3,21 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <base href="/">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Timer">
+    <meta name="apple-mobile-web-app-title" content="lunatimer">
     <meta name="theme-color" content="#f4f0e6">
-    <title>Elegant Timer</title>
+
+    <title>lunatimer — Meditation, Pomodoro &amp; Timebox Timer</title>
+    <meta name="description" content="A calm, beautiful timer for meditation, Pomodoro focus sprints, and time-boxed task lists. Works offline, no sign-up.">
+    <link rel="canonical" href="https://lunatimer.app/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="lunatimer">
+    <meta property="og:title" content="lunatimer — Meditation, Pomodoro &amp; Timebox Timer">
+    <meta property="og:description" content="A calm, beautiful offline timer for meditation, focus sprints and time-boxing.">
+    <meta property="og:url" content="https://lunatimer.app/">
+    <meta property="og:image" content="https://lunatimer.app/icon-512.png">
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="lunatimer — Meditation, Pomodoro &amp; Timebox Timer">
+    <meta name="twitter:description" content="A calm, beautiful offline timer for meditation, focus sprints and time-boxing.">
+    <meta name="twitter:image" content="https://lunatimer.app/icon-512.png">
+
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="preload" as="image" href="icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Load the font without blocking first paint; fall back for no-JS -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap"></noscript>
     <link rel="stylesheet" href="style.css">
+
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"WebApplication","name":"lunatimer","url":"https://lunatimer.app/","description":"A calm, beautiful offline timer for meditation, Pomodoro focus sprints and time-boxed task lists.","applicationCategory":"LifestyleApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+    </script>
 </head>
 <body>
     <div id="app">
+        <noscript><p style="text-align:center;padding:24px;color:#423a24;font-family:sans-serif;">lunatimer needs JavaScript enabled to run.</p></noscript>
         <!-- ============ WELCOME / CHOOSE TIMER ============ -->
         <div id="view-welcome" class="view welcome-view active">
             <div class="welcome-inner">
@@ -59,7 +85,7 @@
         <div id="view-timer" class="view">
             <div class="header">
                 <button class="nav-btn" onclick="app.showPresets()">Presets</button>
-                <div class="title title-toggle" onclick="app.chooseMode()">Timer <span class="title-caret">&#9662;</span></div>
+                <button type="button" class="title title-toggle" onclick="app.chooseMode()" aria-label="Switch timer type">Timer <span class="title-caret" aria-hidden="true">&#9662;</span></button>
                 <button class="nav-btn" onclick="app.showSettings()">Sound</button>
             </div>
 
@@ -70,7 +96,7 @@
                     <div class="hint" id="hint">type to edit</div>
                 </div>
 
-                <svg class="timer-svg" viewBox="0 0 230 230">
+                <svg class="timer-svg" viewBox="0 0 230 230" aria-hidden="true" focusable="false">
                     <defs>
                         <linearGradient id="goldGradient" x1="0%" y1="100%" x2="100%" y2="0%">
                             <stop offset="0%" stop-color="#b58d3c"/>
@@ -87,21 +113,21 @@
             </div>
 
             <div class="controls">
-                <div class="control-item" onclick="app.cancel()">
-                    <div class="icon-circle"><div class="icon-cancel"></div></div>
+                <button type="button" class="control-item" onclick="app.cancel()" aria-label="Cancel timer">
+                    <span class="icon-circle"><span class="icon-cancel"></span></span>
                     <span>Cancel</span>
-                </div>
-                <div class="control-item" id="btn-start" onclick="app.toggleTimer()">
-                    <div class="icon-circle">
-                        <div class="icon-play"></div>
-                        <div class="icon-pause"></div>
-                    </div>
+                </button>
+                <button type="button" class="control-item" id="btn-start" onclick="app.toggleTimer()" aria-label="Start or pause timer">
+                    <span class="icon-circle">
+                        <span class="icon-play"></span>
+                        <span class="icon-pause"></span>
+                    </span>
                     <span id="play-label">Start</span>
-                </div>
-                <div class="control-item" onclick="app.resetToTimer()">
-                    <div class="icon-circle"><div class="icon-reset"></div></div>
+                </button>
+                <button type="button" class="control-item" onclick="app.resetToTimer()" aria-label="Reset timer">
+                    <span class="icon-circle"><span class="icon-reset"></span></span>
                     <span>Reset</span>
-                </div>
+                </button>
             </div>
         </div>
 
@@ -169,7 +195,7 @@
         <div id="view-pomodoro" class="view">
             <div class="header">
                 <button class="nav-btn" onclick="app.goHome()">&#8592; Home</button>
-                <div class="title title-toggle" onclick="app.chooseMode()">Pomodoro <span class="title-caret">&#9662;</span></div>
+                <button type="button" class="title title-toggle" onclick="app.chooseMode()" aria-label="Switch timer type">Pomodoro <span class="title-caret" aria-hidden="true">&#9662;</span></button>
                 <button class="nav-btn" onclick="pomodoro.openSettings()">Settings</button>
             </div>
 
@@ -191,21 +217,21 @@
             </div>
 
             <div class="controls">
-                <div class="control-item" onclick="pomodoro.reset()">
-                    <div class="icon-circle"><div class="icon-reset"></div></div>
+                <button type="button" class="control-item" onclick="pomodoro.reset()" aria-label="Reset Pomodoro">
+                    <span class="icon-circle"><span class="icon-reset"></span></span>
                     <span>Reset</span>
-                </div>
-                <div class="control-item" id="pomo-start" onclick="pomodoro.toggle()">
-                    <div class="icon-circle">
-                        <div class="icon-play"></div>
-                        <div class="icon-pause"></div>
-                    </div>
+                </button>
+                <button type="button" class="control-item" id="pomo-start" onclick="pomodoro.toggle()" aria-label="Start or pause Pomodoro">
+                    <span class="icon-circle">
+                        <span class="icon-play"></span>
+                        <span class="icon-pause"></span>
+                    </span>
                     <span id="pomo-play-label">Start</span>
-                </div>
-                <div class="control-item" onclick="pomodoro.skip()">
-                    <div class="icon-circle"><div class="icon-skip"></div></div>
+                </button>
+                <button type="button" class="control-item" onclick="pomodoro.skip()" aria-label="Skip to next Pomodoro phase">
+                    <span class="icon-circle"><span class="icon-skip"></span></span>
                     <span>Skip</span>
-                </div>
+                </button>
             </div>
         </div>
 
@@ -241,7 +267,7 @@
         <div id="view-timebox" class="view">
             <div class="header">
                 <button class="nav-btn" onclick="app.goHome()">&#8592; Home</button>
-                <div class="title title-toggle" onclick="app.chooseMode()">Timebox <span class="title-caret">&#9662;</span></div>
+                <button type="button" class="title title-toggle" onclick="app.chooseMode()" aria-label="Switch timer type">Timebox <span class="title-caret" aria-hidden="true">&#9662;</span></button>
                 <button class="nav-btn" onclick="timebox.openTasks()">Tasks</button>
             </div>
 
@@ -270,21 +296,21 @@
             </div>
 
             <div class="controls">
-                <div class="control-item" onclick="timebox.reset()">
-                    <div class="icon-circle"><div class="icon-reset"></div></div>
+                <button type="button" class="control-item" onclick="timebox.reset()" aria-label="Reset current task">
+                    <span class="icon-circle"><span class="icon-reset"></span></span>
                     <span>Reset</span>
-                </div>
-                <div class="control-item" id="tb-start" onclick="timebox.toggle()">
-                    <div class="icon-circle">
-                        <div class="icon-play"></div>
-                        <div class="icon-pause"></div>
-                    </div>
+                </button>
+                <button type="button" class="control-item" id="tb-start" onclick="timebox.toggle()" aria-label="Start or pause task timer">
+                    <span class="icon-circle">
+                        <span class="icon-play"></span>
+                        <span class="icon-pause"></span>
+                    </span>
                     <span id="tb-play-label">Start</span>
-                </div>
-                <div class="control-item" onclick="timebox.next()">
-                    <div class="icon-circle"><div class="icon-skip"></div></div>
+                </button>
+                <button type="button" class="control-item" onclick="timebox.next()" aria-label="Next task">
+                    <span class="icon-circle"><span class="icon-skip"></span></span>
                     <span>Next</span>
-                </div>
+                </button>
             </div>
         </div>
 
@@ -321,7 +347,7 @@
 
     <!-- ============ MODAL (prompt / confirm / alert) ============ -->
     <div id="modal-overlay" class="modal-overlay">
-        <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <div class="modal-title" id="modal-title">Title</div>
             <div class="modal-message" id="modal-message"></div>
             <input class="modal-input" id="modal-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off">
@@ -334,9 +360,9 @@
 
     <!-- ============ MODE CHOOSER ============ -->
     <div id="chooser-overlay" class="modal-overlay">
-        <div class="modal modal-compact" role="dialog" aria-modal="true">
-            <div class="modal-title">Choose Timer</div>
-            <button class="choose-card" onclick="app.pickMeditation()">Meditation</button>
+        <div class="modal modal-compact" role="dialog" aria-modal="true" aria-labelledby="chooser-title">
+            <div class="modal-title" id="chooser-title">Choose Timer</div>
+            <button class="choose-card" onclick="app.pickMeditation()">Timer</button>
             <button class="choose-card" onclick="app.pickPomodoro()">Pomodoro</button>
             <button class="choose-card" onclick="app.pickTimebox()">Timebox</button>
         </div>

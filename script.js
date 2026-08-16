@@ -12,6 +12,20 @@ const SOUNDS = [
 // ---- SVG geometry (viewBox 230, center 115, r 100) ----
 const CX = 115, CY = 115, R = 100, CIRC = 2 * Math.PI * R; // 628.3
 
+// starter presets used on first run / when stored data is unreadable
+const DEFAULT_PRESETS = [
+    { name: "Morning Practice", duration: 12, intervals: [] },
+    { name: "Deep Focus",       duration: 21, intervals: [20] }
+];
+
+// safe JSON read: never let a corrupt localStorage value throw at load time
+function readJSON(key, fallback) {
+    try {
+        const v = JSON.parse(localStorage.getItem(key));
+        return v == null ? fallback : v;
+    } catch (e) { return fallback; }
+}
+
 const app = {
     MAX_MIN: 60,     // one full turn of the dial = 60 minutes
     MAX_TOTAL: 1440, // dial can wind up to 24 hours over multiple turns
@@ -25,16 +39,22 @@ const app = {
         isRunning: false,
         timerId: null,
         wakeLock: null,
-        soundIndex: parseInt(localStorage.getItem('mandalaSound')) || 0,
-        presets: JSON.parse(localStorage.getItem('smartAlarmPresets')) || [
-            { name: "Morning Practice", duration: 12, intervals: [] },
-            { name: "Deep Focus",       duration: 21, intervals: [20] }
-        ]
+        soundIndex: parseInt(localStorage.getItem('mandalaSound'), 10) || 0,
+        presets: readJSON('smartAlarmPresets', DEFAULT_PRESETS)
     },
 
-    audioCtx: new (window.AudioContext || window.webkitAudioContext)(),
+    // lazily created on first user gesture (avoids autoplay-policy console warnings)
+    audioCtx: null,
+    _ctx() {
+        if (!this.audioCtx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) this.audioCtx = new AC();
+        }
+        return this.audioCtx;
+    },
 
     init() {
+        if (!Array.isArray(this.state.presets)) this.state.presets = DEFAULT_PRESETS.slice();
         if (!Number.isFinite(this.state.soundIndex) || this.state.soundIndex >= SOUNDS.length) this.state.soundIndex = 0;
         this.updateDisplay();
         this.renderPresets();
@@ -50,7 +70,7 @@ const app = {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     },
-    showTimer()   { if (pomodoro.state.isRunning) pomodoro.pause(); if (timebox.state.isRunning) timebox.pause(); this.switchView('view-timer'); this.updateDisplay(); document.title = 'Elegant Timer'; },
+    showTimer()   { if (pomodoro.state.isRunning) pomodoro.pause(); if (timebox.state.isRunning) timebox.pause(); this.switchView('view-timer'); this.updateDisplay(); document.title = 'lunatimer'; },
     showPresets() { this.renderPresets(); this.switchView('view-presets'); },
     showSettings(){ this.renderSounds(); this.switchView('view-settings'); },
 
@@ -79,12 +99,12 @@ const app = {
         const factor = unit === 'sec' ? 60 : (1 / 60); // min->sec multiplies by 60; sec->min divides
         const conv = (v) => {
             const n = parseFloat(v);
-            if (!isFinite(n)) return '';
+            if (!Number.isFinite(n)) return '';
             const r = n * factor;
             return unit === 'sec' ? Math.round(r) : +r.toFixed(2);
         };
         const dv = parseFloat(durEl.value);
-        durEl.value = isFinite(dv) ? conv(dv) : '';
+        durEl.value = Number.isFinite(dv) ? conv(dv) : '';
         intEl.value = (intEl.value || '')
             .split(/[,\s]+/).map(x => x.trim()).filter(Boolean)
             .map(conv).filter(x => x !== '').join(', ');
@@ -195,7 +215,8 @@ const app = {
     },
 
     startTimer() {
-        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+        const ctx = this._ctx();
+        if (ctx && ctx.state === 'suspended') ctx.resume();
         // nothing set yet — send the user to Set Time instead of silently doing nothing
         if (this.state.remainingSeconds <= 0) { this.showTimeSetup(); return; }
         this.state.isRunning = true;
@@ -551,7 +572,8 @@ const app = {
                 this.state.soundIndex = i;
                 localStorage.setItem('mandalaSound', i);
                 this.renderSounds();
-                if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+                const ctx = this._ctx();
+                if (ctx && ctx.state === 'suspended') ctx.resume();
                 this.playSound(snd, { dur: 2.6 }); // preview
             };
             list.appendChild(div);
@@ -638,9 +660,11 @@ const app = {
                 inputEl.classList.add('hidden');
             }
 
+            const prevFocus = document.activeElement;
             const close = (result) => {
                 overlay.classList.remove('open');
-                okBtn.onclick = cancelBtn.onclick = overlay.onclick = inputEl.onkeydown = null;
+                okBtn.onclick = cancelBtn.onclick = overlay.onclick = inputEl.onkeydown = overlay.onkeydown = null;
+                if (prevFocus && prevFocus.focus) { try { prevFocus.focus(); } catch (e) {} }
                 resolve(result);
             };
 
@@ -651,9 +675,20 @@ const app = {
                 if (e.key === 'Enter') { e.preventDefault(); okBtn.onclick(); }
                 if (e.key === 'Escape') { e.preventDefault(); cancelBtn.onclick(); }
             };
+            // Esc anywhere closes; Tab is trapped within the dialog's focusables
+            overlay.onkeydown = (e) => {
+                if (e.key === 'Escape') { e.preventDefault(); (showCancel ? cancelBtn : okBtn).onclick(); return; }
+                if (e.key !== 'Tab') return;
+                const f = [inputEl, cancelBtn, okBtn].filter(el => !el.classList.contains('hidden') && el.offsetParent !== null);
+                if (!f.length) return;
+                const first = f[0], last = f[f.length - 1];
+                if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+                else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+            };
 
             overlay.classList.add('open');
             if (input) setTimeout(() => { inputEl.focus(); inputEl.select(); }, 60);
+            else setTimeout(() => okBtn.focus(), 60);
         });
     },
     promptDialog(message, value = '', title = 'Preset') {
@@ -668,7 +703,8 @@ const app = {
 
     // ---- Synthesized bowl sound ----
     playSound(def, opts = {}) {
-        const ctx = this.audioCtx;
+        const ctx = this._ctx();
+        if (!ctx) return;
         const t = ctx.currentTime;
         const dur = opts.dur || def.dur;
         const pitch = opts.pitch || 1;
@@ -764,7 +800,6 @@ const pomodoro = {
         if (!this.state.settings) this.load();
         // if nothing armed yet, arm the current mode fresh
         if (this.state.totalSeconds === 0) this.arm(this.state.mode);
-        this.requestNotifyPermission();
         app.switchView('view-pomodoro');
         this.render();
     },
@@ -785,7 +820,9 @@ const pomodoro = {
     toggle() { this.state.isRunning ? this.pause() : this.start(); },
 
     start() {
-        if (app.audioCtx.state === 'suspended') app.audioCtx.resume();
+        const ctx = app._ctx();
+        if (ctx && ctx.state === 'suspended') ctx.resume();
+        this.requestNotifyPermission(); // ask on a real user gesture, not on view-open
         if (this.state.remainingSeconds <= 0) this.arm(this.state.mode);
         this.state.isRunning = true;
         this.setPlayLabel(true);
@@ -827,7 +864,7 @@ const pomodoro = {
     reset() {
         app.releaseWakeLock();
         this.arm(this.state.mode);
-        document.title = 'Elegant Timer';
+        document.title = 'lunatimer';
     },
 
     // Skip: jump to the next phase without counting the current one as complete
@@ -835,7 +872,7 @@ const pomodoro = {
         this.stopTicking();
         app.releaseWakeLock();
         this.arm(this.nextMode(false));
-        document.title = 'Elegant Timer';
+        document.title = 'lunatimer';
     },
 
     // manually jump to a specific phase via the pills
@@ -844,7 +881,7 @@ const pomodoro = {
         this.stopTicking();
         app.releaseWakeLock();
         this.arm(mode);
-        document.title = 'Elegant Timer';
+        document.title = 'lunatimer';
     },
 
     // compute the phase that follows the current one.
@@ -877,7 +914,7 @@ const pomodoro = {
 
         // auto-arm the next phase (user presses Start to begin it)
         this.arm(next);
-        document.title = 'Elegant Timer';
+        document.title = 'lunatimer';
     },
 
     // ---- rendering ----
@@ -1038,7 +1075,8 @@ const pomodoro = {
     // ---- play a chosen alarm sequence (used for completion + settings preview) ----
     playAlarm(index) {
         const a = this.ALARMS[index] || this.ALARMS[0];
-        const ctx = app.audioCtx;
+        const ctx = app._ctx();
+        if (!ctx) return;
         if (ctx.state === 'suspended') ctx.resume();
         const t0 = ctx.currentTime;
         a.notes.forEach(n => {
@@ -1125,7 +1163,6 @@ const timebox = {
             const i = this.firstUndone();
             if (i >= 0) this.arm(i); else this._clearArm();
         }
-        this.requestNotifyPermission();
         app.switchView('view-timebox');
         this.render();
     },
@@ -1160,7 +1197,7 @@ const timebox = {
         this.stopTicking();
         app.releaseWakeLock();
         this.arm(index);
-        document.title = 'Elegant Timer';
+        document.title = 'lunatimer';
     },
 
     // ---- controls ----
@@ -1168,7 +1205,9 @@ const timebox = {
 
     start() {
         if (!this.activeTask()) { this.openTasks(); return; }
-        if (app.audioCtx.state === 'suspended') app.audioCtx.resume();
+        const ctx = app._ctx();
+        if (ctx && ctx.state === 'suspended') ctx.resume();
+        this.requestNotifyPermission(); // ask on a real user gesture, not on view-open
         if (this.state.overtime) return; // must extend/complete first
         if (this.state.remainingSeconds <= 0) this.arm(this.state.activeIndex);
         this.state.isRunning = true;
@@ -1210,7 +1249,7 @@ const timebox = {
         app.releaseWakeLock();
         if (this.state.activeIndex >= 0) this.arm(this.state.activeIndex);
         else this.render();
-        document.title = 'Elegant Timer';
+        document.title = 'lunatimer';
     },
 
     // Next: advance to the following task (does NOT mark current done)
@@ -1223,7 +1262,7 @@ const timebox = {
         if (!n) { this._clearArm(); this.render(); return; }
         const nextIdx = (this.state.activeIndex + 1) % n;
         this.arm(nextIdx);
-        document.title = 'Elegant Timer';
+        document.title = 'lunatimer';
     },
 
     // task reached 00:00
@@ -1244,7 +1283,7 @@ const timebox = {
             this.setPlayLabel(false);
             this.render();
             document.getElementById('tb-card').classList.add('overtime');
-            document.title = 'Elegant Timer';
+            document.title = 'lunatimer';
             return;
         }
 
@@ -1282,7 +1321,7 @@ const timebox = {
             this._clearArm();
             this.render();
         }
-        document.title = 'Elegant Timer';
+        document.title = 'lunatimer';
     },
 
     // toggle a task's done state from the list (without running it)
