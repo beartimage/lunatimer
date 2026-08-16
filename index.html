@@ -18,8 +18,45 @@
 </head>
 <body>
     <div id="app">
+        <!-- ============ WELCOME / CHOOSE TIMER ============ -->
+        <div id="view-welcome" class="view welcome-view active">
+            <div class="welcome-inner">
+                <div class="welcome-brand">
+                    <div class="welcome-logo"></div>
+                    <h1 class="welcome-title">lunatimer</h1>
+                    <p class="welcome-tagline">Choose your timer</p>
+                </div>
+                <div class="welcome-cards">
+                    <button class="welcome-card" onclick="app.goMode('meditation')">
+                        <span class="wc-icon wc-med"></span>
+                        <span class="wc-body">
+                            <span class="wc-name">Meditation</span>
+                            <span class="wc-desc">Calm bells &amp; interval chimes</span>
+                        </span>
+                        <span class="wc-go"></span>
+                    </button>
+                    <button class="welcome-card" onclick="app.goMode('pomodoro')">
+                        <span class="wc-icon wc-pomo"></span>
+                        <span class="wc-body">
+                            <span class="wc-name">Pomodoro</span>
+                            <span class="wc-desc">Focus sprints &amp; breaks</span>
+                        </span>
+                        <span class="wc-go"></span>
+                    </button>
+                    <button class="welcome-card" onclick="app.goMode('timebox')">
+                        <span class="wc-icon wc-tb"></span>
+                        <span class="wc-body">
+                            <span class="wc-name">Timebox</span>
+                            <span class="wc-desc">Time-blocked task list</span>
+                        </span>
+                        <span class="wc-go"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- ============ TIMER ============ -->
-        <div id="view-timer" class="view active">
+        <div id="view-timer" class="view">
             <div class="header">
                 <button class="nav-btn" onclick="app.showPresets()">Presets</button>
                 <div class="title title-toggle" onclick="app.chooseMode()">Timer <span class="title-caret">&#9662;</span></div>
@@ -131,7 +168,7 @@
         <!-- ============ POMODORO ============ -->
         <div id="view-pomodoro" class="view">
             <div class="header">
-                <button class="nav-btn" onclick="app.showTimer()">&#8592; Back</button>
+                <button class="nav-btn" onclick="app.goHome()">&#8592; Home</button>
                 <div class="title title-toggle" onclick="app.chooseMode()">Pomodoro <span class="title-caret">&#9662;</span></div>
                 <button class="nav-btn" onclick="pomodoro.openSettings()">Settings</button>
             </div>
@@ -203,7 +240,7 @@
         <!-- ============ TIMEBOX ============ -->
         <div id="view-timebox" class="view">
             <div class="header">
-                <button class="nav-btn" onclick="app.showTimer()">&#8592; Back</button>
+                <button class="nav-btn" onclick="app.goHome()">&#8592; Home</button>
                 <div class="title title-toggle" onclick="app.chooseMode()">Timebox <span class="title-caret">&#9662;</span></div>
                 <button class="nav-btn" onclick="timebox.openTasks()">Tasks</button>
             </div>

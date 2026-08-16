@@ -73,6 +73,94 @@ body::before {
 }
 .view.active { display: flex; }
 
+/* ---------- Welcome / choose-a-timer ---------- */
+.welcome-view { justify-content: center; }
+.welcome-inner {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(28px, 6vh, 54px);
+}
+.welcome-brand { text-align: center; }
+.welcome-logo {
+    width: clamp(74px, 22vw, 96px);
+    height: clamp(74px, 22vw, 96px);
+    margin: 0 auto clamp(14px, 2.4vh, 20px);
+    border-radius: 24px;
+    background: url('icon-512.png') center / cover no-repeat;
+    box-shadow: 0 14px 32px rgba(66, 58, 36, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+.welcome-title {
+    margin: 0;
+    font-size: clamp(30px, 9vw, 40px);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: var(--ink);
+}
+.welcome-tagline {
+    margin: 9px 0 0;
+    font-size: 12px;
+    letter-spacing: 2.6px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+}
+.welcome-cards {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 1.8vh, 15px);
+}
+.welcome-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    text-align: left;
+    padding: clamp(15px, 2.2vh, 18px) 18px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--cream);
+    box-shadow: 0 6px 18px rgba(66, 58, 36, 0.06), inset 0 1px 2px rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.welcome-card:hover { border-color: rgba(181, 141, 60, 0.5); box-shadow: 0 12px 28px rgba(66, 58, 36, 0.12); }
+.welcome-card:active { transform: scale(0.985); }
+.wc-icon {
+    position: relative;
+    flex: 0 0 auto;
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    background: linear-gradient(155deg, var(--gold-b), var(--gold-a));
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5), 0 5px 12px rgba(181, 141, 60, 0.28);
+}
+.wc-icon::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    -webkit-mask: var(--wc-mask) center / 26px no-repeat;
+    mask: var(--wc-mask) center / 26px no-repeat;
+}
+.wc-med  { --wc-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'); }
+.wc-pomo { --wc-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7.5 12 12 15 13.8"/></svg>'); }
+.wc-tb   { --wc-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.3 6l1.3 1.3L7.4 4.6"/><path d="M3.3 12l1.3 1.3L7.4 10.6"/><path d="M3.3 18l1.3 1.3L7.4 16.6"/></svg>'); }
+.wc-body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.wc-name { font-size: 18px; font-weight: 500; letter-spacing: 0.3px; color: var(--ink); }
+.wc-desc { margin-top: 3px; font-size: 12px; color: var(--ink-soft); }
+.wc-go {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    background: var(--ink-faint);
+    -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>') center / contain no-repeat;
+    mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>') center / contain no-repeat;
+}
+
 .header {
     width: 100%;
     display: flex;

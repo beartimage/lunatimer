@@ -135,13 +135,17 @@ const app = {
 
     // ---- Routing: /timer, /pomodoro, /timebox map to the three timers ----
     _pathForMode(mode) {
-        return mode === 'pomodoro' ? '/pomodoro' : mode === 'timebox' ? '/timebox' : '/timer';
+        return mode === 'pomodoro' ? '/pomodoro'
+             : mode === 'timebox'  ? '/timebox'
+             : mode === 'meditation' ? '/timer'
+             : '/'; // welcome / home
     },
     _modeForPath(pathname) {
         const p = (pathname || '/').replace(/\/+$/, '') || '/';
+        if (p === '/timer') return 'meditation';
         if (p === '/pomodoro') return 'pomodoro';
         if (p === '/timebox') return 'timebox';
-        return 'meditation'; // '/' and '/timer' both land on the meditation timer
+        return 'welcome'; // '/' opens the choose-a-timer welcome screen
     },
     // open the given timer's view (no history change)
     _openMode(mode) {
@@ -154,13 +158,22 @@ const app = {
             if (this.state.isRunning) this.pauseTimer();
             if (pomodoro.state.isRunning) pomodoro.pause();
             timebox.open();
-        } else {
+        } else if (mode === 'meditation') {
             if (pomodoro.state.isRunning) pomodoro.pause();
             if (timebox.state.isRunning) timebox.pause();
             this.showTimer();
+        } else {
+            // welcome / home — pause everything and show the chooser screen
+            if (this.state.isRunning) this.pauseTimer();
+            if (pomodoro.state.isRunning) pomodoro.pause();
+            if (timebox.state.isRunning) timebox.pause();
+            this.switchView('view-welcome');
+            document.title = 'lunatimer';
         }
         this._mode = mode;
     },
+    // send the user back to the welcome screen
+    goHome() { this.goMode('welcome'); },
     // switch timer AND push a new URL (used by the chooser)
     goMode(mode) {
         this._openMode(mode);
