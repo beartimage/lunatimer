@@ -616,18 +616,24 @@ body::before {
 .p-btn.danger:hover { border-color: var(--terra); }
 .p-btn.danger:active { background: rgba(201, 138, 115, 0.14); }
 
-.sound-item .s-name { font-size: 17px; font-weight: 400; letter-spacing: 0.4px; }
-.sound-item .s-sub { font-size: 10px; font-weight: 400; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-soft); margin-top: 3px; }
+.sound-item .s-name { font-size: 15px; font-weight: 400; letter-spacing: 0.4px; }
+.sound-item .s-sub { font-size: 10px; font-weight: 400; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-soft); margin-top: 2px; }
 .sound-item .s-check {
-    font-size: 17px;
+    font-size: 16px;
     color: var(--gold-c);
     opacity: 0;
     flex-shrink: 0;
 }
+/* compact sound rows */
+.sound-item {
+    padding: 11px 15px;
+    margin-bottom: 8px;
+    border-radius: 13px;
+}
 .sound-item.selected {
-    border-color: rgba(181, 141, 60, 0.5);
-    background: linear-gradient(135deg, rgba(230, 205, 130, 0.22), rgba(157, 176, 160, 0.16));
-    box-shadow: 0 4px 16px rgba(181, 141, 60, 0.12);
+    border-color: rgba(181, 141, 60, 0.55);
+    background: rgba(230, 205, 130, 0.16);
+    box-shadow: 0 3px 12px rgba(181, 141, 60, 0.10);
 }
 .sound-item.selected .s-check { opacity: 1; }
 
