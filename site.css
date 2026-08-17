@@ -162,7 +162,7 @@ img { max-width: 100%; display: block; }
 }
 .hero h1 {
     font-size: clamp(38px, 6vw, 62px);
-    font-weight: 500;
+    font-weight: 700;
     line-height: 1.08;
     letter-spacing: 0.5px;
 }
@@ -213,7 +213,7 @@ img { max-width: 100%; display: block; }
 }
 .feature-copy h2 {
     font-size: clamp(26px, 3.4vw, 34px);
-    font-weight: 500;
+    font-weight: 700;
     letter-spacing: 0.4px;
 }
 .feature-copy .kicker {
@@ -272,7 +272,7 @@ img { max-width: 100%; display: block; }
     box-shadow: 0 20px 44px rgba(181, 141, 60, 0.16);
     max-width: calc(var(--wrap) - 48px);
 }
-.cta-band h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 500; letter-spacing: 0.4px; }
+.cta-band h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 700; letter-spacing: 0.4px; }
 .cta-band p { margin: 14px auto 0; max-width: 44ch; color: var(--ink-soft); font-size: 16px; }
 .cta-band .hero-actions { justify-content: center; }
 
