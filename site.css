@@ -104,21 +104,10 @@ img { max-width: 100%; display: block; }
 /* ---------- brand mark ---------- */
 .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; color: var(--ink); }
 .brand-logo {
-    width: 34px; height: 34px; border-radius: 50%;
-    background:
-        radial-gradient(circle at 34% 30%, #fbf3dc 0%, var(--gold-b) 34%, var(--gold-a) 74%, var(--gold-c) 100%);
-    box-shadow: 0 4px 12px rgba(181, 141, 60, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.7);
-    position: relative;
+    width: 36px; height: 36px;
     flex: none;
-}
-.brand-logo::after {
-    content: "";
-    position: absolute;
-    top: 18%; right: 16%;
-    width: 46%; height: 46%;
-    border-radius: 50%;
-    background: radial-gradient(circle at 60% 40%, transparent 0 55%, rgba(66,58,36,0.14) 56% 100%);
-    mix-blend-mode: multiply;
+    background: url('icon.svg') center / contain no-repeat;
+    filter: drop-shadow(0 4px 10px rgba(66, 58, 36, 0.16));
 }
 .brand-name { font-size: 21px; font-weight: 500; letter-spacing: 0.5px; }
 
