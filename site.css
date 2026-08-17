@@ -184,7 +184,7 @@ img { max-width: 100%; display: block; }
 .hero-art { display: flex; justify-content: center; }
 .hero-art img {
     width: 100%;
-    max-width: 320px;
+    max-width: 400px;
     border-radius: 26px;
     border: 1px solid var(--line);
     box-shadow: 0 30px 60px rgba(66, 58, 36, 0.20);
@@ -205,7 +205,7 @@ img { max-width: 100%; display: block; }
 .feature-art { display: flex; justify-content: center; }
 .feature-art img {
     width: 100%;
-    max-width: 300px;
+    max-width: 380px;
     border-radius: 22px;
     border: 1px solid var(--line);
     box-shadow: 0 22px 46px rgba(66, 58, 36, 0.16);
@@ -379,14 +379,14 @@ img { max-width: 100%; display: block; }
 @media (max-width: 860px) {
     .hero .wrap { grid-template-columns: 1fr; text-align: center; }
     .hero-art { order: -1; }
-    .hero-art img { max-width: 260px; }
+    .hero-art img { max-width: 300px; }
     .hero-actions, .hero p.lead { margin-left: auto; margin-right: auto; }
     .feature, .feature.reverse { grid-template-columns: 1fr; text-align: center; }
     .feature.reverse .feature-art { order: -1; }
     .feature-art { order: -1; }
     .feature-copy p, .feature-copy ul { margin-left: auto; margin-right: auto; }
     .feature-copy ul { display: inline-block; text-align: left; }
-    .feature-art img { max-width: 240px; }
+    .feature-art img { max-width: 300px; }
     .values-grid { grid-template-columns: 1fr; }
     .footer-top { grid-template-columns: 1fr 1fr; }
 }

@@ -1,4 +1,4 @@
-const CACHE = 'elegant-timer-v17';
+const CACHE = 'elegant-timer-v18';
 const ASSETS = [
   './',
   './index.html',
@@ -21,6 +21,7 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',
+  './shot-welcome.jpg',
   './shot-timer.jpg',
   './shot-pomodoro.jpg',
   './shot-timebox.jpg'
