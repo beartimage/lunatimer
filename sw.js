@@ -1,4 +1,4 @@
-const CACHE = 'elegant-timer-v20';
+const CACHE = 'elegant-timer-v21';
 const ASSETS = [
   './',
   './index.html',
@@ -20,11 +20,7 @@ const ASSETS = [
   './icon.svg',
   './icon-192.png',
   './icon-512.png',
-  './apple-touch-icon.png',
-  './shot-welcome.jpg',
-  './shot-timer.jpg',
-  './shot-pomodoro.jpg',
-  './shot-timebox.jpg'
+  './apple-touch-icon.png'
 ];
 
 self.addEventListener('message', (e) => {

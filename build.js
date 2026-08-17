@@ -34,10 +34,6 @@ const FILES = [
   'icon-192.png',
   'icon-512.png',
   'apple-touch-icon.png',
-  'shot-welcome.jpg',
-  'shot-timer.jpg',
-  'shot-pomodoro.jpg',
-  'shot-timebox.jpg',
 ];
 
 fs.rmSync(DIST, { recursive: true, force: true });
