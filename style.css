@@ -654,6 +654,53 @@ body::before {
 }
 .sound-item.selected .s-check { opacity: 1; }
 
+/* ---------- Audio-share mode (meditation only) ---------- */
+.sound-mode {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(66, 58, 36, 0.12);
+}
+.sm-title {
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+}
+.seg {
+    display: flex;
+    gap: 6px;
+    background: rgba(66, 58, 36, 0.06);
+    border-radius: 13px;
+    padding: 4px;
+}
+.seg-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.seg-btn:active { transform: scale(0.98); }
+.seg-btn.active {
+    background: var(--cream);
+    color: var(--ink);
+    box-shadow: 0 2px 8px rgba(66, 58, 36, 0.12);
+}
+.sm-hint {
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ink-faint);
+}
+
 /* ---------- Completion ---------- */
 .completion-content {
     flex: 1;

@@ -40,6 +40,10 @@ const app = {
         timerId: null,
         wakeLock: null,
         soundIndex: parseInt(localStorage.getItem('mandalaSound'), 10) || 0,
+        // how the alarm shares the phone's audio while music plays:
+        //   'playback' = play OVER music, ignores the silent switch (default)
+        //   'ambient'  = mix WITH music, obeys the silent switch
+        audioMode: (localStorage.getItem('mandalaAudioMode') === 'ambient') ? 'ambient' : 'playback',
         presets: readJSON('smartAlarmPresets', DEFAULT_PRESETS)
     },
 
@@ -75,7 +79,7 @@ const app = {
     },
     showTimer()   { if (pomodoro.state.isRunning) pomodoro.pause(); if (timebox.state.isRunning) timebox.pause(); this.switchView('view-timer'); this.updateDisplay(); document.title = 'Meditation Timer — lunatimer'; },
     showPresets() { this.renderPresets(); this.switchView('view-presets'); },
-    showSettings(){ this.renderSounds(); this.switchView('view-settings'); },
+    showSettings(){ this.renderSounds(); this.renderAudioMode(); this.switchView('view-settings'); },
 
     showTimeSetup() {
         if (this.state.isRunning) return;
@@ -240,7 +244,7 @@ const app = {
         // look-ahead audio: schedule interval bells + final alarm on the Web Audio
         // clock so they still sound if JS timers are throttled in the background.
         this._scheduleBells(ctx);
-        this._keepAliveOn();
+        this._keepAliveOn(this.state.audioMode);
         this._mediaOn('Meditation', this.state.presetName || 'Timer');
 
         this.state.timerId = setInterval(() => {
@@ -607,7 +611,30 @@ const app = {
         });
     },
 
-    // ---- Wake Lock: keep the screen ON while the timer is running ----
+    // choose how the alarm shares audio with other apps' music (meditation only)
+    setAudioMode(mode) {
+        this.state.audioMode = (mode === 'ambient') ? 'ambient' : 'playback';
+        localStorage.setItem('mandalaAudioMode', this.state.audioMode);
+        this.renderAudioMode();
+        // if a meditation timer is already running, switch the live session too
+        if (this.state.isRunning) {
+            try { if (navigator.audioSession) navigator.audioSession.type = this.state.audioMode; } catch (_) {}
+        }
+    },
+    renderAudioMode() {
+        const pb = document.getElementById('mode-playback');
+        const am = document.getElementById('mode-ambient');
+        const hint = document.getElementById('sound-mode-hint');
+        if (!pb || !am) return;
+        const over = this.state.audioMode !== 'ambient';
+        pb.classList.toggle('active', over);
+        am.classList.toggle('active', !over);
+        pb.setAttribute('aria-pressed', String(over));
+        am.setAttribute('aria-pressed', String(!over));
+        if (hint) hint.innerText = over
+            ? 'Alarm plays over other music and rings even when the phone is on silent.'
+            : 'Alarm mixes with your music, but stays silent when the phone’s mute switch is on.';
+    },
     async requestWakeLock() {
         if ('wakeLock' in navigator) {
             if (this.state.wakeLock) return;         // already held
@@ -796,14 +823,14 @@ const app = {
     },
 
     // Near-silent looping buffer keeps the iOS audio session (and our clock) alive.
-    _keepAliveOn() {
+    _keepAliveOn(sessionType) {
         const ctx = this._ctx();
         if (!ctx || this._ka) return;
-        // iOS 16.4+: use a mixable "ambient" session so our bell plays alongside the
-        // user's background music WITHOUT interrupting it. (Trade-off: an ambient
-        // session obeys the hardware silent switch, so a muted phone won't sound.)
+        // iOS 16.4+: choose how our audio shares the session. Default 'playback'
+        // (alarm sounds OVER other music and ignores the silent switch). Meditation
+        // can opt into 'ambient' (mix WITH music, but obeys the silent switch).
         try {
-            if (navigator.audioSession) navigator.audioSession.type = 'ambient';
+            if (navigator.audioSession) navigator.audioSession.type = sessionType || 'playback';
         } catch (_) {}
         try {
             const buf = ctx.createBuffer(1, Math.max(1, ctx.sampleRate | 0), ctx.sampleRate);

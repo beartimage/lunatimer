@@ -196,6 +196,14 @@
             </div>
             <div class="panel">
                 <div class="scroll-list" id="sounds-list"></div>
+                <div class="sound-mode">
+                    <div class="sm-title">When music is playing</div>
+                    <div class="seg" role="group" aria-label="Alarm audio mode">
+                        <button type="button" class="seg-btn" id="mode-playback" onclick="app.setAudioMode('playback')">Play over music</button>
+                        <button type="button" class="seg-btn" id="mode-ambient" onclick="app.setAudioMode('ambient')">Mix with music</button>
+                    </div>
+                    <div class="sm-hint" id="sound-mode-hint"></div>
+                </div>
             </div>
         </div>
 
