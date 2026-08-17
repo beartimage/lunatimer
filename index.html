@@ -55,8 +55,52 @@
 <body>
     <div id="app">
         <noscript><p style="text-align:center;padding:24px;color:#423a24;font-family:sans-serif;">lunatimer needs JavaScript enabled to run.</p></noscript>
+        <!-- ============ LANDING (homepage /) ============ -->
+        <div id="view-landing" class="view landing-view active">
+            <div class="landing">
+                <header class="lp-hero">
+                    <div class="welcome-logo"></div>
+                    <h1 class="lp-title">lunatimer</h1>
+                    <p class="lp-slogan">A timer for every phase of your day</p>
+                    <p class="lp-intro">Three calm, focused timers in one place — no sign-up, works offline. Pick the one that fits the moment.</p>
+                    <button class="lp-cta" onclick="app.goMode('welcome')">Choose a timer</button>
+                </header>
+
+                <section class="lp-item">
+                    <img class="lp-shot" src="shot-timer.jpg" width="640" height="759" loading="lazy" decoding="async" alt="lunatimer meditation timer showing a 5-minute dial">
+                    <div class="lp-copy">
+                        <h2 class="lp-name">Meditation Timer</h2>
+                        <p class="lp-desc">Wind the dial to any length, add gentle interval bells, and drift with soft Tibetan-bowl chimes. Perfect for meditation, breathwork, or a mindful pause to reset your focus.</p>
+                        <button class="lp-btn" onclick="app.goMode('meditation')">Open Timer</button>
+                    </div>
+                </section>
+
+                <section class="lp-item">
+                    <img class="lp-shot" src="shot-pomodoro.jpg" width="640" height="683" loading="lazy" decoding="async" alt="lunatimer Pomodoro timer on a long break">
+                    <div class="lp-copy">
+                        <h2 class="lp-name">Pomodoro</h2>
+                        <p class="lp-desc">Work in focused sprints with built-in breaks. Focus, short break and long break cycle automatically while it counts your sessions — the simple rhythm that keeps you productive without burning out.</p>
+                        <button class="lp-btn" onclick="app.goMode('pomodoro')">Open Pomodoro</button>
+                    </div>
+                </section>
+
+                <section class="lp-item">
+                    <img class="lp-shot" src="shot-timebox.jpg" width="640" height="678" loading="lazy" decoding="async" alt="lunatimer Timebox screen with a task list">
+                    <div class="lp-copy">
+                        <h2 class="lp-name">Timebox</h2>
+                        <p class="lp-desc">Give every task a fixed block of time. Line up your to-dos, set the minutes, and move through the day one task at a time — hard limits to stay sharp, soft ones for a little extra.</p>
+                        <button class="lp-btn" onclick="app.goMode('timebox')">Open Timebox</button>
+                    </div>
+                </section>
+
+                <footer class="lp-foot">
+                    <p>Made for calmer, more intentional days.</p>
+                </footer>
+            </div>
+        </div>
+
         <!-- ============ WELCOME / CHOOSE TIMER ============ -->
-        <div id="view-welcome" class="view welcome-view active">
+        <div id="view-welcome" class="view welcome-view">
             <div class="welcome-inner">
                 <div class="welcome-brand">
                     <div class="welcome-logo"></div>

@@ -158,14 +158,16 @@ const app = {
         return mode === 'pomodoro' ? '/pomodoro'
              : mode === 'timebox'  ? '/timebox'
              : mode === 'meditation' ? '/timer'
-             : '/'; // welcome / home
+             : mode === 'welcome' ? '/welcome'
+             : '/'; // landing / home
     },
     _modeForPath(pathname) {
         const p = (pathname || '/').replace(/\/+$/, '') || '/';
         if (p === '/timer') return 'meditation';
         if (p === '/pomodoro') return 'pomodoro';
         if (p === '/timebox') return 'timebox';
-        return 'welcome'; // '/' opens the choose-a-timer welcome screen
+        if (p === '/welcome') return 'welcome';
+        return 'landing'; // '/' opens the landing page
     },
     // open the given timer's view (no history change)
     _openMode(mode) {
@@ -182,17 +184,24 @@ const app = {
             if (pomodoro.state.isRunning) pomodoro.pause();
             if (timebox.state.isRunning) timebox.pause();
             this.showTimer();
-        } else {
-            // welcome / home — pause everything and show the chooser screen
+        } else if (mode === 'welcome') {
+            // choose-a-timer hub
             if (this.state.isRunning) this.pauseTimer();
             if (pomodoro.state.isRunning) pomodoro.pause();
             if (timebox.state.isRunning) timebox.pause();
             this.switchView('view-welcome');
-            document.title = 'lunatimer';
+            document.title = 'lunatimer — Choose your timer';
+        } else {
+            // landing / home page
+            if (this.state.isRunning) this.pauseTimer();
+            if (pomodoro.state.isRunning) pomodoro.pause();
+            if (timebox.state.isRunning) timebox.pause();
+            this.switchView('view-landing');
+            document.title = 'lunatimer — Meditation, Pomodoro & Timebox Timer';
         }
         this._mode = mode;
     },
-    // send the user back to the welcome screen
+    // send the user back to the welcome (choose-a-timer) screen
     goHome() { this.goMode('welcome'); },
     // switch timer AND push a new URL (used by the chooser)
     goMode(mode) {

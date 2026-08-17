@@ -23,15 +23,27 @@ const PAGES = {
     title: 'lunatimer',
     body: `# lunatimer
 
-A calm, beautiful timer for **meditation**, **Pomodoro** focus sprints, and **time-boxed** task lists. Works fully offline, no sign-up.
+**A timer for every phase of your day.**
+
+Three calm, focused timers in one place — no sign-up, works fully offline.
 
 ## Timers
 
-- **[Timer](${SITE}/timer)** — Meditation timer with calm Tibetan-bowl bells and optional interval chimes. Wind the dial to set any duration up to 24 hours.
-- **[Pomodoro](${SITE}/pomodoro)** — Focus sprints with short and long breaks, a configurable long-break interval, and completion alarms.
-- **[Timebox](${SITE}/timebox)** — A time-blocked task list. Assign minutes per task; "hard" tasks stop at zero, "soft" tasks let you add a few more minutes.
+- **[Meditation Timer](${SITE}/timer)** — Wind the dial to any length, add gentle interval bells, and drift with soft Tibetan-bowl chimes. Perfect for meditation, breathwork, or a mindful pause to reset your focus.
+- **[Pomodoro](${SITE}/pomodoro)** — Work in focused sprints with built-in breaks. Focus, short break and long break cycle automatically while it counts your sessions — the simple rhythm that keeps you productive without burning out.
+- **[Timebox](${SITE}/timebox)** — Give every task a fixed block of time. Line up your to-dos, set the minutes, and move through the day one task at a time — hard limits to stay sharp, soft ones for a little extra.
 
-All timers keep the screen awake while running and send a notification when time is up.`,
+[Choose a timer](${SITE}/welcome)`,
+  },
+  '/welcome': {
+    title: 'Choose a timer — lunatimer',
+    body: `# Choose your timer
+
+Pick the timer that fits the moment:
+
+- **[Meditation Timer](${SITE}/timer)** — Calm bells & interval chimes.
+- **[Pomodoro](${SITE}/pomodoro)** — Focus sprints & breaks.
+- **[Timebox](${SITE}/timebox)** — Time-blocked task list.`,
   },
   '/timer': {
     title: 'Timer — lunatimer',
