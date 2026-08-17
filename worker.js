@@ -8,6 +8,11 @@
 
 const SITE = 'https://lunatimer.app';
 
+// Client-side routes handled by the timer SPA (app.html). The marketing
+// landing owns "/" (index.html); these paths must fall back to app.html,
+// not to the landing, so a deep link / refresh lands in the app.
+const APP_ROUTES = new Set(['/welcome', '/timer', '/pomodoro', '/timebox']);
+
 // RFC 8288 / RFC 9727 §3 discovery links advertised on HTML page responses.
 // Root-relative per the RFC examples; agents resolve them against the request URL.
 const DISCOVERY_LINKS = [
@@ -168,7 +173,11 @@ export default {
     }
 
     // Default: serve the static site (HTML for browsers, plus all assets).
-    const resp = await env.ASSETS.fetch(request);
+    // App routes are client-side paths with no matching file, so route them
+    // to the SPA shell (app.html) instead of the landing / SPA fallback.
+    const resp = APP_ROUTES.has(path)
+      ? await env.ASSETS.fetch(new Request(new URL('/app.html', url), request))
+      : await env.ASSETS.fetch(request);
 
     // Advertise the markdown alternative + machine-readable discovery links.
     if (page) {

@@ -5,4 +5,10 @@
   <url><loc>https://lunatimer.app/timer</loc><lastmod>2026-08-17</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://lunatimer.app/pomodoro</loc><lastmod>2026-08-17</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://lunatimer.app/timebox</loc><lastmod>2026-08-17</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://lunatimer.app/about</loc><lastmod>2026-08-17</lastmod><changefreq>yearly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://lunatimer.app/faq</loc><lastmod>2026-08-17</lastmod><changefreq>yearly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://lunatimer.app/contact</loc><lastmod>2026-08-17</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://lunatimer.app/privacy</loc><lastmod>2026-08-17</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://lunatimer.app/terms</loc><lastmod>2026-08-17</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://lunatimer.app/cookies</loc><lastmod>2026-08-17</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
 </urlset>

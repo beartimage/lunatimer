@@ -1,9 +1,18 @@
-const CACHE = 'elegant-timer-v15';
+const CACHE = 'elegant-timer-v16';
 const ASSETS = [
   './',
   './index.html',
+  './app.html',
+  './about.html',
+  './faq.html',
+  './contact.html',
+  './privacy.html',
+  './terms.html',
+  './cookies.html',
   './style.css',
+  './site.css',
   './script.js',
+  './site.js',
   './manifest.json',
   './robots.txt',
   './sitemap.xml',
@@ -51,7 +60,12 @@ self.addEventListener('fetch', (e) => {
       .catch(() =>
         caches.match(req).then((cached) => {
           if (cached) return cached;
-          if (req.mode === 'navigate') return caches.match('./index.html');
+          if (req.mode === 'navigate') {
+            // app client-routes fall back to the SPA shell; everything else to the landing
+            const p = new URL(req.url).pathname.replace(/\/+$/, '');
+            const appRoutes = ['/welcome', '/timer', '/pomodoro', '/timebox'];
+            return caches.match(appRoutes.includes(p) ? './app.html' : './index.html');
+          }
           return Response.error();
         })
       )

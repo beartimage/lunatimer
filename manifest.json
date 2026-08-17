@@ -3,7 +3,7 @@
   "short_name": "lunatimer",
   "id": "/",
   "description": "A calm, beautiful timer for meditation, Pomodoro focus sprints, and time-boxed task lists. Works offline, no sign-up.",
-  "start_url": "/",
+  "start_url": "/welcome",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

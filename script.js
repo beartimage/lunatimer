@@ -70,7 +70,7 @@ const app = {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     },
-    showTimer()   { if (pomodoro.state.isRunning) pomodoro.pause(); if (timebox.state.isRunning) timebox.pause(); this.switchView('view-timer'); this.updateDisplay(); document.title = 'lunatimer'; },
+    showTimer()   { if (pomodoro.state.isRunning) pomodoro.pause(); if (timebox.state.isRunning) timebox.pause(); this.switchView('view-timer'); this.updateDisplay(); document.title = 'Meditation Timer — lunatimer'; },
     showPresets() { this.renderPresets(); this.switchView('view-presets'); },
     showSettings(){ this.renderSounds(); this.switchView('view-settings'); },
 
@@ -158,16 +158,19 @@ const app = {
         return mode === 'pomodoro' ? '/pomodoro'
              : mode === 'timebox'  ? '/timebox'
              : mode === 'meditation' ? '/timer'
-             : mode === 'welcome' ? '/welcome'
-             : '/'; // landing / home
+             : '/welcome'; // welcome = choose-a-timer hub
     },
     _modeForPath(pathname) {
-        const p = (pathname || '/').replace(/\/+$/, '') || '/';
+        const p = (pathname || '/welcome').replace(/\/+$/, '') || '/welcome';
         if (p === '/timer') return 'meditation';
         if (p === '/pomodoro') return 'pomodoro';
         if (p === '/timebox') return 'timebox';
-        if (p === '/welcome') return 'welcome';
-        return 'landing'; // '/' opens the landing page
+        return 'welcome'; // /welcome (and anything else) opens the chooser
+    },
+    // keep <link rel="canonical"> in sync with the current route
+    _setCanonical(path) {
+        const el = document.querySelector('link[rel="canonical"]');
+        if (el) el.setAttribute('href', 'https://lunatimer.app' + path);
     },
     // open the given timer's view (no history change)
     _openMode(mode) {
@@ -184,21 +187,15 @@ const app = {
             if (pomodoro.state.isRunning) pomodoro.pause();
             if (timebox.state.isRunning) timebox.pause();
             this.showTimer();
-        } else if (mode === 'welcome') {
-            // choose-a-timer hub
+        } else {
+            // choose-a-timer hub (welcome)
             if (this.state.isRunning) this.pauseTimer();
             if (pomodoro.state.isRunning) pomodoro.pause();
             if (timebox.state.isRunning) timebox.pause();
             this.switchView('view-welcome');
             document.title = 'lunatimer — Choose your timer';
-        } else {
-            // landing / home page
-            if (this.state.isRunning) this.pauseTimer();
-            if (pomodoro.state.isRunning) pomodoro.pause();
-            if (timebox.state.isRunning) timebox.pause();
-            this.switchView('view-landing');
-            document.title = 'lunatimer — Meditation, Pomodoro & Timebox Timer';
         }
+        this._setCanonical(this._pathForMode(mode));
         this._mode = mode;
     },
     // send the user back to the welcome (choose-a-timer) screen

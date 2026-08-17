@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <base href="/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="lunatimer">
     <meta name="theme-color" content="#f4f0e6">
 
     <!-- Google tag (gtag.js) -->
@@ -19,422 +15,211 @@
       gtag('config', 'G-XVW7TXTVCF');
     </script>
 
-    <title>lunatimer — Meditation, Pomodoro &amp; Timebox Timer</title>
-    <meta name="description" content="A calm, beautiful timer for meditation, Pomodoro focus sprints, and time-boxed task lists. Works offline, no sign-up.">
+    <title>lunatimer — A timer for every phase of your day</title>
+    <meta name="description" content="lunatimer is a calm, beautiful timer for meditation, Pomodoro focus sprints, and time-boxed task lists. Free, works offline, no sign-up.">
     <link rel="canonical" href="https://lunatimer.app/">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="lunatimer">
-    <meta property="og:title" content="lunatimer — Meditation, Pomodoro &amp; Timebox Timer">
-    <meta property="og:description" content="A calm, beautiful offline timer for meditation, focus sprints and time-boxing.">
+    <meta property="og:title" content="lunatimer — A timer for every phase of your day">
+    <meta property="og:description" content="A calm, beautiful timer for meditation, Pomodoro focus, and time-boxing. Free, offline, no sign-up.">
     <meta property="og:url" content="https://lunatimer.app/">
     <meta property="og:image" content="https://lunatimer.app/icon-512.png">
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="lunatimer — Meditation, Pomodoro &amp; Timebox Timer">
-    <meta name="twitter:description" content="A calm, beautiful offline timer for meditation, focus sprints and time-boxing.">
+    <meta name="twitter:title" content="lunatimer — A timer for every phase of your day">
+    <meta name="twitter:description" content="A calm, beautiful timer for meditation, Pomodoro focus, and time-boxing. Free, offline, no sign-up.">
     <meta name="twitter:image" content="https://lunatimer.app/icon-512.png">
 
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="icon" href="icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <link rel="preload" as="image" href="icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Load the font without blocking first paint; fall back for no-JS -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap"></noscript>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="site.css">
 
     <script type="application/ld+json">
     {"@context":"https://schema.org","@type":"WebApplication","name":"lunatimer","url":"https://lunatimer.app/","description":"A calm, beautiful offline timer for meditation, Pomodoro focus sprints and time-boxed task lists.","applicationCategory":"LifestyleApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
     </script>
 </head>
 <body>
-    <div id="app">
-        <noscript><p style="text-align:center;padding:24px;color:#423a24;font-family:sans-serif;">lunatimer needs JavaScript enabled to run.</p></noscript>
-        <!-- ============ LANDING (homepage /) ============ -->
-        <div id="view-landing" class="view landing-view active">
-            <div class="landing">
-                <header class="lp-hero">
-                    <div class="welcome-logo"></div>
-                    <h1 class="lp-title">lunatimer</h1>
-                    <p class="lp-slogan">A timer for every phase of your day</p>
-                    <p class="lp-intro">Three calm, focused timers in one place — no sign-up, works offline. Pick the one that fits the moment.</p>
-                    <button class="lp-cta" onclick="app.goMode('welcome')">Choose a timer</button>
-                </header>
-
-                <section class="lp-item">
-                    <img class="lp-shot" src="shot-timer.jpg" width="640" height="759" loading="lazy" decoding="async" alt="lunatimer meditation timer showing a 5-minute dial">
-                    <div class="lp-copy">
-                        <h2 class="lp-name">Meditation Timer</h2>
-                        <p class="lp-desc">Wind the dial to any length, add gentle interval bells, and drift with soft Tibetan-bowl chimes. Perfect for meditation, breathwork, or a mindful pause to reset your focus.</p>
-                        <button class="lp-btn" onclick="app.goMode('meditation')">Open Timer</button>
-                    </div>
-                </section>
-
-                <section class="lp-item">
-                    <img class="lp-shot" src="shot-pomodoro.jpg" width="640" height="683" loading="lazy" decoding="async" alt="lunatimer Pomodoro timer on a long break">
-                    <div class="lp-copy">
-                        <h2 class="lp-name">Pomodoro</h2>
-                        <p class="lp-desc">Work in focused sprints with built-in breaks. Focus, short break and long break cycle automatically while it counts your sessions — the simple rhythm that keeps you productive without burning out.</p>
-                        <button class="lp-btn" onclick="app.goMode('pomodoro')">Open Pomodoro</button>
-                    </div>
-                </section>
-
-                <section class="lp-item">
-                    <img class="lp-shot" src="shot-timebox.jpg" width="640" height="678" loading="lazy" decoding="async" alt="lunatimer Timebox screen with a task list">
-                    <div class="lp-copy">
-                        <h2 class="lp-name">Timebox</h2>
-                        <p class="lp-desc">Give every task a fixed block of time. Line up your to-dos, set the minutes, and move through the day one task at a time — hard limits to stay sharp, soft ones for a little extra.</p>
-                        <button class="lp-btn" onclick="app.goMode('timebox')">Open Timebox</button>
-                    </div>
-                </section>
-
-                <footer class="lp-foot">
-                    <p>Made for calmer, more intentional days.</p>
-                </footer>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/" aria-label="lunatimer home">
+                <span class="brand-logo" aria-hidden="true"></span>
+                <span class="brand-name">lunatimer</span>
+            </a>
+            <nav class="site-nav" aria-label="Primary">
+                <a class="navlink" href="#timers">Timers</a>
+                <a class="navlink" href="/about">About</a>
+                <a class="navlink" href="/faq">FAQ</a>
+            </nav>
+            <div class="header-actions">
+                <button class="btn btn-ghost btn-sm" type="button" data-signin>Sign in</button>
+                <a class="btn btn-gold btn-sm" href="/welcome">Open app</a>
             </div>
         </div>
+    </header>
 
-        <!-- ============ WELCOME / CHOOSE TIMER ============ -->
-        <div id="view-welcome" class="view welcome-view">
-            <div class="welcome-inner">
-                <div class="welcome-brand">
-                    <div class="welcome-logo"></div>
-                    <h1 class="welcome-title">lunatimer</h1>
-                    <p class="welcome-tagline">Choose your timer</p>
+    <main>
+        <!-- HERO -->
+        <section class="hero">
+            <div class="wrap">
+                <div class="hero-copy">
+                    <span class="hero-eyebrow">Meditation · Pomodoro · Timebox</span>
+                    <h1>Focus, breathe, and get things done.</h1>
+                    <p class="slogan">A timer for every phase of your day</p>
+                    <p class="lead">Three calm, purpose-built timers in one place. Sit for a mindful pause, work in focused sprints, or give every task its own block of time — all in a quiet, beautiful interface that stays out of your way.</p>
+                    <div class="hero-actions">
+                        <a class="btn btn-gold" href="/welcome">Choose a timer</a>
+                        <a class="btn btn-ghost" href="#timers">See what's inside</a>
+                    </div>
+                    <p class="hero-note">Free · No sign-up · Works offline · Installs like an app</p>
                 </div>
-                <div class="welcome-cards">
-                    <button class="welcome-card" onclick="app.goMode('meditation')">
-                        <span class="wc-icon wc-med"></span>
-                        <span class="wc-body">
-                            <span class="wc-name">Timer</span>
-                            <span class="wc-desc">Calm bells &amp; interval chimes</span>
-                        </span>
-                        <span class="wc-go"></span>
-                    </button>
-                    <button class="welcome-card" onclick="app.goMode('pomodoro')">
-                        <span class="wc-icon wc-pomo"></span>
-                        <span class="wc-body">
-                            <span class="wc-name">Pomodoro</span>
-                            <span class="wc-desc">Focus sprints &amp; breaks</span>
-                        </span>
-                        <span class="wc-go"></span>
-                    </button>
-                    <button class="welcome-card" onclick="app.goMode('timebox')">
-                        <span class="wc-icon wc-tb"></span>
-                        <span class="wc-body">
-                            <span class="wc-name">Timebox</span>
-                            <span class="wc-desc">Time-blocked task list</span>
-                        </span>
-                        <span class="wc-go"></span>
-                    </button>
+                <div class="hero-art">
+                    <img src="shot-timer.jpg" width="640" height="759" alt="lunatimer meditation timer showing a five-minute dial" fetchpriority="high">
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- ============ TIMER ============ -->
-        <div id="view-timer" class="view">
-            <div class="header">
-                <button class="nav-btn" onclick="app.showPresets()">Presets</button>
-                <button type="button" class="title title-toggle" onclick="app.chooseMode()" aria-label="Switch timer type">Timer <span class="title-caret" aria-hidden="true">&#9662;</span></button>
-                <button class="nav-btn" onclick="app.showSettings()">Sound</button>
-            </div>
-
-            <div class="timer-container" id="timer-container">
-                <div class="timer-face">
-                    <div class="preset-name" id="preset-name">Meditation</div>
-                    <div class="time-text" id="time-text">00:00</div>
-                    <div class="hint" id="hint">type to edit</div>
-                </div>
-
-                <svg class="timer-svg" viewBox="0 0 230 230" aria-hidden="true" focusable="false">
-                    <defs>
-                        <linearGradient id="goldGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#b58d3c"/>
-                            <stop offset="50%" stop-color="#e6cd82"/>
-                            <stop offset="100%" stop-color="#8a6b23"/>
-                        </linearGradient>
-                    </defs>
-                    <!-- faint full guide ring -->
-                    <circle class="guide" cx="115" cy="115" r="100"></circle>
-                    <!-- progress arc + knob on the same guide ring -->
-                    <circle id="progress-arc" class="progress-arc" cx="115" cy="115" r="100" transform="rotate(-90 115 115)"></circle>
-                    <circle id="progress-knob" class="progress-knob" cx="115" cy="15" r="8.5"></circle>
-                </svg>
-            </div>
-
-            <div class="controls">
-                <button type="button" class="control-item" onclick="app.cancel()" aria-label="Cancel timer">
-                    <span class="icon-circle"><span class="icon-cancel"></span></span>
-                    <span>Cancel</span>
-                </button>
-                <button type="button" class="control-item" id="btn-start" onclick="app.toggleTimer()" aria-label="Start or pause timer">
-                    <span class="icon-circle">
-                        <span class="icon-play"></span>
-                        <span class="icon-pause"></span>
-                    </span>
-                    <span id="play-label">Start</span>
-                </button>
-                <button type="button" class="control-item" onclick="app.resetToTimer()" aria-label="Reset timer">
-                    <span class="icon-circle"><span class="icon-reset"></span></span>
-                    <span>Reset</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ============ SET TIME / EDIT PRESET ============ -->
-        <div id="view-setup" class="view">
-            <div class="header">
-                <button class="nav-btn" onclick="app.showTimer()">&#8592; Back</button>
-                <div class="title" id="setup-title">Set Time</div>
-                <div style="width: 60px;"></div>
-            </div>
-            <div class="panel">
-                <div class="setup-form">
-                    <label class="edit-only">Preset name</label>
-                    <input class="edit-only" type="text" id="input-name" placeholder="Preset name">
-                    <label>Unit</label>
-                    <div class="unit-toggle" id="unit-toggle">
-                        <button type="button" class="unit-btn active" data-unit="min" onclick="app.setUnit('min')">Minutes</button>
-                        <button type="button" class="unit-btn" data-unit="sec" onclick="app.setUnit('sec')">Seconds</button>
+        <!-- FEATURES -->
+        <section class="features" id="timers">
+            <div class="wrap">
+                <article class="feature">
+                    <div class="feature-art">
+                        <img src="shot-timer.jpg" width="640" height="759" loading="lazy" decoding="async" alt="Meditation timer dial set to five minutes">
                     </div>
-                    <label id="label-duration">Duration (minutes)</label>
-                    <input type="number" id="input-duration" value="5" min="0" max="1440" inputmode="numeric">
-                    <label id="label-interval">Interval bells (minutes, comma-separated)</label>
-                    <input type="text" id="input-interval" value="" placeholder="e.g. 20, 40 (optional)" inputmode="text" autocapitalize="off" autocorrect="off">
-                    <button class="btn-primary" id="setup-btn" onclick="app.saveSetup()">Apply</button>
-                    <button class="btn-secondary new-only" id="setup-save-btn" onclick="app.saveSetupAsPreset()">Save as Preset</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============ PRESETS ============ -->
-        <div id="view-presets" class="view">
-            <div class="header">
-                <button class="nav-btn" onclick="app.showTimer()">&#8592; Back</button>
-                <div class="title">Presets</div>
-                <div style="width: 60px;"></div>
-            </div>
-            <div class="panel">
-                <div class="scroll-list" id="presets-list"></div>
-                <button class="btn-primary" onclick="app.addPreset()">+ Add Current as Preset</button>
-            </div>
-        </div>
-
-        <!-- ============ SOUND ============ -->
-        <div id="view-settings" class="view">
-            <div class="header">
-                <button class="nav-btn" onclick="app.showTimer()">&#8592; Back</button>
-                <div class="title">Alarm Sound</div>
-                <div style="width: 60px;"></div>
-            </div>
-            <div class="panel">
-                <div class="scroll-list" id="sounds-list"></div>
-            </div>
-        </div>
-
-        <!-- ============ COMPLETE ============ -->
-        <div id="view-complete" class="view">
-            <div class="completion-content">
-                <div class="check-mark"></div>
-                <h2>Complete</h2>
-                <button class="btn-primary" onclick="app.resetToTimer()">Back to Timer</button>
-            </div>
-        </div>
-
-        <!-- ============ POMODORO ============ -->
-        <div id="view-pomodoro" class="view">
-            <div class="header">
-                <button class="nav-btn" onclick="app.goHome()">&#8592; Home</button>
-                <button type="button" class="title title-toggle" onclick="app.chooseMode()" aria-label="Switch timer type">Pomodoro <span class="title-caret" aria-hidden="true">&#9662;</span></button>
-                <button class="nav-btn" onclick="pomodoro.openSettings()">Settings</button>
-            </div>
-
-            <div class="pomo-stage">
-                <div class="pomo-modes" id="pomo-modes">
-                    <span class="pomo-pill" data-m="work" onclick="pomodoro.pickMode('work')">Focus</span>
-                    <span class="pomo-pill" data-m="short" onclick="pomodoro.pickMode('short')">Short</span>
-                    <span class="pomo-pill" data-m="long" onclick="pomodoro.pickMode('long')">Long</span>
-                </div>
-
-                <div class="pomo-card" id="pomo-card">
-                    <div class="pomo-label" id="pomo-mode">Focus</div>
-                    <div class="pomo-clock" id="pomo-time">25:00</div>
-                    <div class="pomo-bar">
-                        <div class="pomo-bar-fill" id="pomo-bar-fill"></div>
+                    <div class="feature-copy">
+                        <span class="kicker">Meditation Timer</span>
+                        <h2>A calm space to just be present</h2>
+                        <p>Wind the dial to any length and drift with soft, synthesized Tibetan-bowl chimes. Perfect for meditation, breathwork, or a mindful pause to reset your focus.</p>
+                        <ul>
+                            <li>Set any duration by dragging the dial, or type an exact time</li>
+                            <li>Optional interval bells to gently mark the halfway point</li>
+                            <li>Seven warm bell tones to choose from</li>
+                            <li>Save reusable presets for your favorite sessions</li>
+                        </ul>
+                        <a class="btn btn-ghost" href="/timer">Open Timer</a>
                     </div>
-                    <div class="pomo-dots" id="pomo-dots"></div>
-                </div>
-            </div>
+                </article>
 
-            <div class="controls">
-                <button type="button" class="control-item" onclick="pomodoro.reset()" aria-label="Reset Pomodoro">
-                    <span class="icon-circle"><span class="icon-reset"></span></span>
-                    <span>Reset</span>
-                </button>
-                <button type="button" class="control-item" id="pomo-start" onclick="pomodoro.toggle()" aria-label="Start or pause Pomodoro">
-                    <span class="icon-circle">
-                        <span class="icon-play"></span>
-                        <span class="icon-pause"></span>
-                    </span>
-                    <span id="pomo-play-label">Start</span>
-                </button>
-                <button type="button" class="control-item" onclick="pomodoro.skip()" aria-label="Skip to next Pomodoro phase">
-                    <span class="icon-circle"><span class="icon-skip"></span></span>
-                    <span>Skip</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ============ POMODORO SETTINGS ============ -->
-        <div id="view-pomo-settings" class="view">
-            <div class="header">
-                <button class="nav-btn" onclick="app.switchView('view-pomodoro')">&#8592; Back</button>
-                <div class="title">Pomodoro</div>
-                <div style="width: 60px;"></div>
-            </div>
-            <div class="panel">
-                <div class="scroll-list">
-                    <div class="setup-form">
-                        <label>Focus (minutes)</label>
-                        <input type="number" id="pomo-work" min="1" max="180" inputmode="numeric">
-                        <label>Short break (minutes)</label>
-                        <input type="number" id="pomo-short" min="1" max="120" inputmode="numeric">
-                        <label>Long break (minutes)</label>
-                        <input type="number" id="pomo-long" min="1" max="120" inputmode="numeric">
-                        <label>Long break after (focus sessions)</label>
-                        <input type="number" id="pomo-interval" min="1" max="12" inputmode="numeric">
+                <article class="feature reverse">
+                    <div class="feature-art">
+                        <img src="shot-pomodoro.jpg" width="640" height="683" loading="lazy" decoding="async" alt="Pomodoro timer showing a long break">
                     </div>
-                    <label class="pomo-sounds-label">Alarm sound</label>
-                    <div id="pomo-sounds"></div>
-                    <div class="pomo-stats" id="pomo-stats"></div>
-                </div>
-                <button class="btn-primary" onclick="pomodoro.saveSettings()">Save</button>
-                <button class="btn-secondary" onclick="pomodoro.resetStats()">Reset Stats</button>
-            </div>
-        </div>
-
-        <!-- ============ TIMEBOX ============ -->
-        <div id="view-timebox" class="view">
-            <div class="header">
-                <button class="nav-btn" onclick="app.goHome()">&#8592; Home</button>
-                <button type="button" class="title title-toggle" onclick="app.chooseMode()" aria-label="Switch timer type">Timebox <span class="title-caret" aria-hidden="true">&#9662;</span></button>
-                <button class="nav-btn" onclick="timebox.openTasks()">Tasks</button>
-            </div>
-
-            <div class="pomo-stage tb-stage">
-                <div class="pomo-card" id="tb-card">
-                    <div class="tb-task-row">
-                        <div class="pomo-label" id="tb-name">No task</div>
-                        <span class="tb-badge" id="tb-badge">Hard</span>
+                    <div class="feature-copy">
+                        <span class="kicker">Pomodoro</span>
+                        <h2>Work in focused sprints, rest on purpose</h2>
+                        <p>The simple rhythm that keeps you productive without burning out. Focus, short break and long break cycle automatically while lunatimer counts your sessions.</p>
+                        <ul>
+                            <li>Focus, short break and long break flow automatically</li>
+                            <li>Fully adjustable lengths and long-break interval</li>
+                            <li>Tracks completed pomodoros and your current cycle</li>
+                            <li>Pick a gentle completion alarm</li>
+                        </ul>
+                        <a class="btn btn-ghost" href="/pomodoro">Open Pomodoro</a>
                     </div>
-                    <div class="pomo-clock" id="tb-time">25:00</div>
-                    <div class="pomo-bar"><div class="pomo-bar-fill" id="tb-bar-fill"></div></div>
-                    <div class="tb-count" id="tb-count"></div>
+                </article>
 
-                    <!-- soft-timebox overtime prompt -->
-                    <div class="tb-overtime" id="tb-overtime">
-                        <div class="tb-overtime-label">Time's up &mdash; a little longer?</div>
-                        <div class="tb-overtime-btns">
-                            <button class="tb-ext" onclick="timebox.extend(5)">+5 min</button>
-                            <button class="tb-ext" onclick="timebox.extend(10)">+10 min</button>
-                            <button class="tb-ext tb-ext-done" onclick="timebox.finishTask()">Complete</button>
-                        </div>
+                <article class="feature">
+                    <div class="feature-art">
+                        <img src="shot-timebox.jpg" width="640" height="678" loading="lazy" decoding="async" alt="Timebox screen with a list of tasks">
+                    </div>
+                    <div class="feature-copy">
+                        <span class="kicker">Timebox</span>
+                        <h2>Give every task a block of time</h2>
+                        <p>Line up your to-dos, set the minutes, and move through the day one task at a time. Hard limits keep you sharp; soft ones give you a little extra when you need it.</p>
+                        <ul>
+                            <li>Build a task list, each with its own time budget</li>
+                            <li>Hard tasks stop on time; soft tasks offer +5 / +10 minutes</li>
+                            <li>Reorder by dragging; edit or delete anytime</li>
+                            <li>See how many tasks you've finished</li>
+                        </ul>
+                        <a class="btn btn-ghost" href="/timebox">Open Timebox</a>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- VALUES -->
+        <section class="values">
+            <div class="wrap">
+                <div class="values-grid">
+                    <div class="value-card">
+                        <h3>Calm by design</h3>
+                        <p>A warm, paper-like interface with soft sounds — built to lower the noise, not add to it.</p>
+                    </div>
+                    <div class="value-card">
+                        <h3>Private &amp; offline</h3>
+                        <p>Your presets and settings stay on your device. No account required, and it keeps working without a connection.</p>
+                    </div>
+                    <div class="value-card">
+                        <h3>Free to use</h3>
+                        <p>Every timer is free. Install lunatimer to your home screen and it opens like a native app.</p>
                     </div>
                 </div>
-
-                <div class="tb-list" id="tb-list"></div>
             </div>
+        </section>
 
-            <div class="controls">
-                <button type="button" class="control-item" onclick="timebox.reset()" aria-label="Reset current task">
-                    <span class="icon-circle"><span class="icon-reset"></span></span>
-                    <span>Reset</span>
-                </button>
-                <button type="button" class="control-item" id="tb-start" onclick="timebox.toggle()" aria-label="Start or pause task timer">
-                    <span class="icon-circle">
-                        <span class="icon-play"></span>
-                        <span class="icon-pause"></span>
-                    </span>
-                    <span id="tb-play-label">Start</span>
-                </button>
-                <button type="button" class="control-item" onclick="timebox.next()" aria-label="Next task">
-                    <span class="icon-circle"><span class="icon-skip"></span></span>
-                    <span>Next</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ============ TIMEBOX TASKS ============ -->
-        <div id="view-timebox-tasks" class="view">
-            <div class="header">
-                <button class="nav-btn" onclick="timebox.open()">&#8592; Back</button>
-                <div class="title">Tasks</div>
-                <div style="width: 60px;"></div>
-            </div>
-            <div class="panel">
-                <div class="scroll-list">
-                    <div class="setup-form">
-                        <label>Task name</label>
-                        <input type="text" id="tb-in-name" placeholder="e.g. Write report" autocapitalize="sentences" autocorrect="off">
-                        <label>Minutes</label>
-                        <input type="number" id="tb-in-min" value="25" min="1" max="600" inputmode="numeric">
-                        <label>Type</label>
-                        <div class="unit-toggle" id="tb-mode-toggle">
-                            <button type="button" class="unit-btn active" data-mode="hard" onclick="timebox.setAddMode('hard')">Hard</button>
-                            <button type="button" class="unit-btn" data-mode="soft" onclick="timebox.setAddMode('soft')">Soft</button>
-                        </div>
-                        <div class="tb-mode-hint" id="tb-mode-hint">Hard: stop the moment time runs out.</div>
-                        <button class="btn-primary" id="tb-add-btn" onclick="timebox.addTask()">+ Add Task</button>
-                        <button class="btn-secondary" id="tb-cancel-edit" style="display:none;" onclick="timebox.cancelEdit()">Cancel Edit</button>
-                    </div>
-                    <div class="tb-editlist" id="tb-editlist"></div>
-                    <label class="pomo-sounds-label">Alarm sound</label>
-                    <div id="tb-sounds"></div>
+        <!-- CTA -->
+        <section class="cta-band">
+            <div class="wrap">
+                <h2>Ready for a calmer, more focused day?</h2>
+                <p>Pick the timer that fits the moment and start in seconds — nothing to install, nothing to sign up for.</p>
+                <div class="hero-actions">
+                    <a class="btn btn-gold" href="/welcome">Choose a timer</a>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
-    <!-- ============ MODAL (prompt / confirm / alert) ============ -->
-    <div id="modal-overlay" class="modal-overlay">
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-            <div class="modal-title" id="modal-title">Title</div>
-            <div class="modal-message" id="modal-message"></div>
-            <input class="modal-input" id="modal-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off">
-            <div class="modal-actions">
-                <button class="modal-btn modal-cancel" id="modal-cancel">Cancel</button>
-                <button class="modal-btn modal-ok" id="modal-ok">OK</button>
+    <footer class="site-footer">
+        <div class="wrap">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <a class="brand" href="/" aria-label="lunatimer home">
+                        <span class="brand-logo" aria-hidden="true"></span>
+                        <span class="brand-name">lunatimer</span>
+                    </a>
+                    <p>A timer for every phase of your day — meditation, focus, and time-boxing in one calm place.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Timers</h4>
+                    <a href="/timer">Meditation</a>
+                    <a href="/pomodoro">Pomodoro</a>
+                    <a href="/timebox">Timebox</a>
+                    <a href="/welcome">Choose a timer</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Company</h4>
+                    <a href="/about">About</a>
+                    <a href="/faq">FAQ</a>
+                    <a href="/contact">Contact</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <a href="/privacy">Privacy Policy</a>
+                    <a href="/terms">Terms of Service</a>
+                    <a href="/cookies">Cookie Policy</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 lunatimer. All rights reserved.</span>
+                <nav aria-label="Legal">
+                    <a href="/privacy">Privacy</a>
+                    <a href="/terms">Terms</a>
+                    <a href="/cookies">Cookies</a>
+                    <a href="/contact">Contact</a>
+                </nav>
             </div>
         </div>
-    </div>
+    </footer>
 
-    <!-- ============ MODE CHOOSER ============ -->
-    <div id="chooser-overlay" class="modal-overlay">
-        <div class="modal modal-compact" role="dialog" aria-modal="true" aria-labelledby="chooser-title">
-            <div class="modal-title" id="chooser-title">Choose Timer</div>
-            <button class="choose-card" onclick="app.pickMeditation()">Timer</button>
-            <button class="choose-card" onclick="app.pickPomodoro()">Pomodoro</button>
-            <button class="choose-card" onclick="app.pickTimebox()">Timebox</button>
-        </div>
-    </div>
-
-    <script src="script.js"></script>
-    <script>
-        // Register the service worker for offline use.
-        // NOTE: we intentionally do NOT auto-reload on update — a forced reload
-        // would wipe a running timer. New versions apply on the next launch.
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then((reg) => {
-                    reg.update();
-                }).catch(() => {});
-            });
-        }
-    </script>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script src="site.js" defer></script>
 </body>
 </html>

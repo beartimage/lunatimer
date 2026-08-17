@@ -12,8 +12,17 @@ const DIST = path.join(ROOT, 'dist');
 // corrupt the regex literals in script.js and the data-URI SVG masks in style.css.
 const FILES = [
   'index.html',
+  'app.html',
+  'about.html',
+  'faq.html',
+  'contact.html',
+  'privacy.html',
+  'terms.html',
+  'cookies.html',
   'style.css',
+  'site.css',
   'script.js',
+  'site.js',
   'sw.js',
   'manifest.json',
   'robots.txt',
