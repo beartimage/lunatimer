@@ -799,11 +799,11 @@ const app = {
     _keepAliveOn() {
         const ctx = this._ctx();
         if (!ctx || this._ka) return;
-        // iOS 16.4+: while a timer runs, mark our audio as primary "playback" so the
-        // alarm sounds OVER background music and ignores the silent switch. (Only set
-        // during a run — previews stay mixable and won't interrupt the user's music.)
+        // iOS 16.4+: use a mixable "ambient" session so our bell plays alongside the
+        // user's background music WITHOUT interrupting it. (Trade-off: an ambient
+        // session obeys the hardware silent switch, so a muted phone won't sound.)
         try {
-            if (navigator.audioSession) navigator.audioSession.type = 'playback';
+            if (navigator.audioSession) navigator.audioSession.type = 'ambient';
         } catch (_) {}
         try {
             const buf = ctx.createBuffer(1, Math.max(1, ctx.sampleRate | 0), ctx.sampleRate);
