@@ -49,11 +49,6 @@ const app = {
         if (!this.audioCtx) {
             const AC = window.AudioContext || window.webkitAudioContext;
             if (AC) this.audioCtx = new AC();
-            // iOS 16.4+: mark our audio as primary "playback" so alarm/bell sounds
-            // play OVER background music from other apps and ignore the silent switch.
-            try {
-                if (navigator.audioSession) navigator.audioSession.type = 'playback';
-            } catch (e) { /* unsupported browser — ignore */ }
         }
         // another app grabbing the audio session (e.g. music starting) can suspend us;
         // always try to resume before we schedule a sound.
@@ -242,21 +237,18 @@ const app = {
         this.state.endTime = performance.now() + this.state.remainingSeconds * 1000;
         this._firedMarks = new Set();
 
+        // look-ahead audio: schedule interval bells + final alarm on the Web Audio
+        // clock so they still sound if JS timers are throttled in the background.
+        this._scheduleBells(ctx);
+        this._keepAliveOn();
+        this._mediaOn('Meditation', this.state.presetName || 'Timer');
+
         this.state.timerId = setInterval(() => {
             const remMs = this.state.endTime - performance.now();
             this.state.remainingSeconds = Math.max(0, Math.ceil(remMs / 1000));
 
-            const elapsed = this.state.durationSeconds - this.state.remainingSeconds;
-            this.state.intervalMarks.forEach((m) => {
-                if (elapsed >= m && this.state.remainingSeconds > 0 && !this._firedMarks.has(m)) {
-                    this._firedMarks.add(m);
-                    this.playSound(this.currentSound(), { dur: 1.8, pitch: 1.5 }); // interval: higher & shorter
-                }
-            });
-
             if (remMs <= 0) {
-                this.pauseTimer();
-                this.playSound(this.currentSound());                          // final alarm
+                this.pauseTimer();          // sound already scheduled on the audio clock
                 this.switchView('view-complete');
             } else {
                 this.updateDisplay();
@@ -265,6 +257,20 @@ const app = {
 
         this.updateDisplay();
         this._raf();
+    },
+
+    // schedule this run's interval bells + final alarm on the audio clock
+    _scheduleBells(ctx) {
+        if (!ctx) return;
+        this._clearSchedule();
+        const base = ctx.currentTime;
+        const elapsed = this.state.durationSeconds - this.state.remainingSeconds;
+        const snd = this.currentSound();
+        this.state.intervalMarks.forEach((m) => {
+            const when = m - elapsed;                                     // seconds from now
+            if (when > 0.05) this._bowlAt(snd, base + when, { dur: 1.8, pitch: 1.5 });
+        });
+        this._bowlAt(snd, base + this.state.remainingSeconds, {});        // final alarm
     },
 
     // per-frame paint so the ring/knob glide continuously
@@ -283,6 +289,7 @@ const app = {
         this.state.isRunning = false;
         clearInterval(this.state.timerId);
         if (this._rafId) cancelAnimationFrame(this._rafId);
+        this._stopTimerAudio();
         document.getElementById('app').classList.remove('running');
         this.setPlayButton(false);
         this.releaseWakeLock();
@@ -721,31 +728,141 @@ const app = {
         return this._modal({ title, message, showCancel: false });
     },
 
-    // ---- Synthesized bowl sound ----
-    playSound(def, opts = {}) {
+    // ---- audio scheduling ----
+    // Look-ahead: alarms are scheduled directly on the Web Audio clock so they
+    // still sound at the right instant even if JS timers are throttled while the
+    // tab is backgrounded. A near-silent keep-alive loop + Media Session presence
+    // keep the iOS audio session (and this clock) alive in the background.
+    _sched: [],   // [{ nodes:[OscillatorNode], at:seconds }] scheduled on the audio clock
+    _ka: null,    // silent keep-alive buffer source
+
+    // Tibetan-bowl tone starting at absolute ctx time `at`; registered for cancel.
+    _bowlAt(def, at, opts = {}) {
         const ctx = this._ctx();
-        if (!ctx) return;
-        const t = ctx.currentTime;
+        if (!ctx) return [];
         const dur = opts.dur || def.dur;
         const pitch = opts.pitch || 1;
-
         const master = ctx.createGain();
-        master.gain.setValueAtTime(0.0001, t);
-        master.gain.linearRampToValueAtTime(0.9, t + 0.08);
-        master.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+        master.gain.setValueAtTime(0.0001, at);
+        master.gain.linearRampToValueAtTime(0.9, at + 0.08);
+        master.gain.exponentialRampToValueAtTime(0.0008, at + dur);
         master.connect(ctx.destination);
-
+        const nodes = [];
         def.partials.forEach(p => {
             const osc = ctx.createOscillator();
             const g = ctx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(def.base * p.r * pitch, t);
-            g.gain.setValueAtTime(p.g, t);
-            osc.connect(g);
-            g.connect(master);
-            osc.start(t);
-            osc.stop(t + dur);
+            osc.frequency.setValueAtTime(def.base * p.r * pitch, at);
+            g.gain.setValueAtTime(p.g, at);
+            osc.connect(g); g.connect(master);
+            osc.start(at); osc.stop(at + dur);
+            nodes.push(osc);
         });
+        this._sched.push({ nodes, at });
+        return nodes;
+    },
+
+    // Multi-note alarm sequence (pomodoro / timebox) at absolute ctx time `at`.
+    _seqAt(alarm, at) {
+        const ctx = this._ctx();
+        if (!ctx) return [];
+        const nodes = [];
+        alarm.notes.forEach(n => {
+            const start = at + n.t;
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = alarm.type || 'sine';
+            osc.frequency.setValueAtTime(n.f, start);
+            g.gain.setValueAtTime(0.0001, start);
+            g.gain.linearRampToValueAtTime(n.g, start + 0.03);
+            g.gain.exponentialRampToValueAtTime(0.0006, start + n.d);
+            osc.connect(g); g.connect(ctx.destination);
+            osc.start(start); osc.stop(start + n.d);
+            nodes.push(osc);
+        });
+        this._sched.push({ nodes, at });
+        return nodes;
+    },
+
+    // Cancel sounds still comfortably in the future; leave ones already sounding
+    // (so a completion bell isn't cut off when the run ends).
+    _clearSchedule() {
+        const ctx = this.audioCtx;
+        const now = ctx ? ctx.currentTime : 0;
+        this._sched.forEach(e => {
+            if (e.at > now + 0.15) e.nodes.forEach(o => { try { o.stop(); } catch (_) {} });
+        });
+        this._sched = [];
+    },
+
+    // Near-silent looping buffer keeps the iOS audio session (and our clock) alive.
+    _keepAliveOn() {
+        const ctx = this._ctx();
+        if (!ctx || this._ka) return;
+        // iOS 16.4+: while a timer runs, mark our audio as primary "playback" so the
+        // alarm sounds OVER background music and ignores the silent switch. (Only set
+        // during a run — previews stay mixable and won't interrupt the user's music.)
+        try {
+            if (navigator.audioSession) navigator.audioSession.type = 'playback';
+        } catch (_) {}
+        try {
+            const buf = ctx.createBuffer(1, Math.max(1, ctx.sampleRate | 0), ctx.sampleRate);
+            const src = ctx.createBufferSource();
+            src.buffer = buf; src.loop = true;
+            const g = ctx.createGain(); g.gain.value = 0.0001;
+            src.connect(g); g.connect(ctx.destination);
+            src.start();
+            this._ka = src;
+        } catch (_) {}
+    },
+    _keepAliveOff() {
+        if (this._ka) { try { this._ka.stop(); } catch (_) {} this._ka = null; }
+    },
+
+    // Present as active media so iOS is less eager to suspend us in the background.
+    _mediaOn(title, sub) {
+        if (!('mediaSession' in navigator)) return;
+        try {
+            if (window.MediaMetadata) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: title || 'lunatimer',
+                    artist: sub || 'Timer running',
+                    album: 'lunatimer',
+                    artwork: [{ src: 'icon-512.png', sizes: '512x512', type: 'image/png' }]
+                });
+            }
+            navigator.mediaSession.playbackState = 'playing';
+            const set = (a, cb) => { try { navigator.mediaSession.setActionHandler(a, cb); } catch (_) {} };
+            set('play', () => this._activeResume());
+            set('pause', () => this._activePause());
+            set('stop', () => this._activePause());
+        } catch (_) {}
+    },
+    _mediaOff() {
+        if (!('mediaSession' in navigator)) return;
+        try { navigator.mediaSession.playbackState = 'none'; } catch (_) {}
+    },
+
+    // Stop all timer-driven audio (future schedule + keep-alive + media presence).
+    _stopTimerAudio() { this._clearSchedule(); this._keepAliveOff(); this._mediaOff(); },
+
+    // Route lock-screen / headset controls to whichever timer is open.
+    _activePause() {
+        if (this._mode === 'pomodoro') pomodoro.pause();
+        else if (this._mode === 'timebox') timebox.pause();
+        else this.pauseTimer();
+    },
+    _activeResume() {
+        if (this._mode === 'pomodoro') pomodoro.start();
+        else if (this._mode === 'timebox') timebox.start();
+        else this.startTimer();
+    },
+
+    // ---- Synthesized bowl sound (immediate — used for previews) ----
+    playSound(def, opts = {}) {
+        const ctx = this._ctx();
+        if (!ctx) return;
+        this._bowlAt(def, ctx.currentTime, opts);
     }
 };
 
@@ -852,6 +969,12 @@ const pomodoro = {
         // drift-corrected: track an absolute end timestamp, not tick counts
         this.state.endTime = performance.now() + this.state.remainingSeconds * 1000;
 
+        // look-ahead: schedule this phase's completion chime on the audio clock
+        app._clearSchedule();
+        if (ctx) app._seqAt(this.ALARMS[this.state.settings.sound] || this.ALARMS[0], ctx.currentTime + this.state.remainingSeconds);
+        app._keepAliveOn();
+        app._mediaOn(this.modeLabel(this.state.mode), 'Pomodoro');
+
         this.state.timerId = setInterval(() => {
             const remMs = this.state.endTime - performance.now();
             this.state.remainingSeconds = Math.max(0, Math.ceil(remMs / 1000));
@@ -878,6 +1001,7 @@ const pomodoro = {
         this.state.isRunning = false;
         if (this.state.timerId) { clearInterval(this.state.timerId); this.state.timerId = null; }
         if (this.state.rafId) { cancelAnimationFrame(this.state.rafId); this.state.rafId = null; }
+        app._stopTimerAudio();
     },
 
     // Reset: re-arm the CURRENT phase from full
@@ -920,9 +1044,8 @@ const pomodoro = {
     // phase reached 00:00
     complete() {
         const finished = this.state.mode;
-        this.stopTicking();
+        this.stopTicking();          // scheduled chime already fires on the audio clock
         app.releaseWakeLock();
-        this.chime();
 
         if (finished === 'work') {
             this.state.totalDone += 1;
@@ -1092,25 +1215,11 @@ const pomodoro = {
         try { new Notification('Pomodoro', { body, silent: false }); } catch (e) {}
     },
 
-    // ---- play a chosen alarm sequence (used for completion + settings preview) ----
+    // ---- play a chosen alarm sequence (used for settings preview) ----
     playAlarm(index) {
-        const a = this.ALARMS[index] || this.ALARMS[0];
         const ctx = app._ctx();
         if (!ctx) return;
-        if (ctx.state === 'suspended') ctx.resume();
-        const t0 = ctx.currentTime;
-        a.notes.forEach(n => {
-            const start = t0 + n.t;
-            const osc = ctx.createOscillator();
-            const g = ctx.createGain();
-            osc.type = a.type || 'sine';
-            osc.frequency.setValueAtTime(n.f, start);
-            g.gain.setValueAtTime(0.0001, start);
-            g.gain.linearRampToValueAtTime(n.g, start + 0.03);
-            g.gain.exponentialRampToValueAtTime(0.0006, start + n.d);
-            osc.connect(g); g.connect(ctx.destination);
-            osc.start(start); osc.stop(start + n.d);
-        });
+        app._seqAt(this.ALARMS[index] || this.ALARMS[0], ctx.currentTime);
     },
 
     // fired when a phase reaches 00:00
@@ -1236,6 +1345,14 @@ const timebox = {
         app.requestWakeLock();
 
         this.state.endTime = performance.now() + this.state.remainingSeconds * 1000;
+
+        // look-ahead: schedule this task's completion chime on the audio clock
+        app._clearSchedule();
+        const _al = pomodoro.ALARMS[this.state.sound] || pomodoro.ALARMS[0];
+        if (ctx) app._seqAt(_al, ctx.currentTime + this.state.remainingSeconds);
+        app._keepAliveOn();
+        app._mediaOn(this.activeTask() ? this.activeTask().name : 'Timebox', 'Timebox');
+
         this.state.timerId = setInterval(() => {
             const remMs = this.state.endTime - performance.now();
             this.state.remainingSeconds = Math.max(0, Math.ceil(remMs / 1000));
@@ -1262,6 +1379,7 @@ const timebox = {
         this.state.isRunning = false;
         if (this.state.timerId) { clearInterval(this.state.timerId); this.state.timerId = null; }
         if (this.state.rafId) { cancelAnimationFrame(this.state.rafId); this.state.rafId = null; }
+        app._stopTimerAudio();
     },
 
     // Reset: re-arm the current task from full
@@ -1288,9 +1406,8 @@ const timebox = {
     // task reached 00:00
     complete() {
         const task = this.activeTask();
-        this.stopTicking();
+        this.stopTicking();          // scheduled chime already fires on the audio clock
         app.releaseWakeLock();
-        this.chime();
 
         if (!task) { this.render(); return; }
 
