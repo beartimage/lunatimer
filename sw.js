@@ -1,4 +1,4 @@
-const CACHE = 'elegant-timer-v26';
+const CACHE = 'elegant-timer-v27';
 const ASSETS = [
   './',
   './index.html',

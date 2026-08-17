@@ -144,7 +144,7 @@ img { max-width: 100%; display: block; }
 .header-actions { display: flex; align-items: center; gap: 12px; }
 
 /* ---------- hero ---------- */
-.hero { padding: clamp(36px, 5vw, 64px) 0 clamp(28px, 4vw, 48px); }
+.hero { padding: clamp(36px, 5vw, 76px) 0 clamp(28px, 4vw, 60px); }
 .hero .wrap {
     display: grid;
     grid-template-columns: 1.15fr 0.85fr;
@@ -192,13 +192,13 @@ img { max-width: 100%; display: block; }
 .shot text { font-family: 'Jost', -apple-system, 'Segoe UI', sans-serif; }
 
 /* ---------- feature rows ---------- */
-.features { padding: clamp(16px, 3vw, 36px) 0; }
+.features { padding: clamp(16px, 3vw, 44px) 0; }
 .feature {
     display: grid;
     grid-template-columns: 1fr 1fr;
     align-items: center;
     gap: clamp(28px, 5vw, 64px);
-    padding: clamp(24px, 4vw, 44px) 0;
+    padding: clamp(24px, 4vw, 56px) 0;
     border-top: 1px solid var(--line);
 }
 .feature:first-child { border-top: none; }
@@ -245,7 +245,7 @@ img { max-width: 100%; display: block; }
 .feature-copy .btn { margin-top: 24px; }
 
 /* ---------- value strip ---------- */
-.values { padding: clamp(20px, 3vw, 40px) 0; }
+.values { padding: clamp(20px, 3vw, 48px) 0; }
 .values-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -262,7 +262,7 @@ img { max-width: 100%; display: block; }
 .value-card p { margin-top: 8px; font-size: 14.5px; color: var(--ink-soft); }
 
 /* ---------- CTA band ---------- */
-.cta-band { padding: clamp(28px, 4vw, 56px) 0; }
+.cta-band { padding: clamp(28px, 4vw, 68px) 0; }
 .cta-band .wrap {
     background: linear-gradient(150deg, #fbf3dc, #efe4c4);
     border: 1px solid rgba(181, 141, 60, 0.35);
