@@ -49,7 +49,15 @@ const app = {
         if (!this.audioCtx) {
             const AC = window.AudioContext || window.webkitAudioContext;
             if (AC) this.audioCtx = new AC();
+            // iOS 16.4+: mark our audio as primary "playback" so alarm/bell sounds
+            // play OVER background music from other apps and ignore the silent switch.
+            try {
+                if (navigator.audioSession) navigator.audioSession.type = 'playback';
+            } catch (e) { /* unsupported browser — ignore */ }
         }
+        // another app grabbing the audio session (e.g. music starting) can suspend us;
+        // always try to resume before we schedule a sound.
+        if (this.audioCtx && this.audioCtx.state === 'suspended') this.audioCtx.resume();
         return this.audioCtx;
     },
 
