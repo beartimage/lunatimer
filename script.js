@@ -1693,10 +1693,24 @@ const timebox = {
         app._stopTimerAudio();
     },
 
-    // Reset: re-arm the current task from full
+    // Reset: restart the current task from scratch — full time, cleared checklist
     reset() {
         this._accrue();
         app.releaseWakeLock();
+        this.clearUndoSkip();
+        const task = this.activeTask();
+        if (task) {
+            // fresh restart: un-tick this task's sub-tasks and drop done/skip marks
+            if (task.subs && task.subs.length) task.subs.forEach(s => s.done = false);
+            task.done = false; task.skipped = false;
+            // reset this task's session tally so planned-vs-actual starts clean
+            if (this.state.session && this.state.session.rows[task.id]) {
+                delete this.state.session.rows[task.id];
+            }
+            this.saveTasks();
+        }
+        document.getElementById('tb-card').classList.remove('overtime');
+        this.state.overtime = false;
         if (this.state.activeIndex >= 0) this.arm(this.state.activeIndex);
         else this.render();
         document.title = 'lunatimer';
