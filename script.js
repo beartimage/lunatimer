@@ -49,6 +49,7 @@ const app = {
 
     // lazily created on first user gesture (avoids autoplay-policy console warnings)
     audioCtx: null,
+    _ctxType: null,   // the navigator.audioSession.type the current context was built under
     _ctx() {
         if (!this.audioCtx) {
             const AC = window.AudioContext || window.webkitAudioContext;
@@ -58,6 +59,26 @@ const app = {
         // always try to resume before we schedule a sound.
         if (this.audioCtx && this.audioCtx.state === 'suspended') this.audioCtx.resume();
         return this.audioCtx;
+    },
+
+    // Ensure the AudioContext is running under the desired iOS audio-session category.
+    // iOS locks the category in at context-creation time, so if it changed we must
+    // rebuild the context AFTER setting the type — otherwise 'playback' silently has
+    // no effect and other apps' music (Apple Music) ducks our alarm to nothing.
+    _ensureAudioSession(type) {
+        const want = type || 'playback';
+        try {
+            if (navigator.audioSession && this.audioCtx && this._ctxType !== want) {
+                try { this.audioCtx.close(); } catch (_) {}
+                this.audioCtx = null;
+                this._ka = null;   // its source belonged to the closed context
+            }
+        } catch (_) {}
+        try { if (navigator.audioSession) navigator.audioSession.type = want; } catch (_) {}
+        const ctx = this._ctx();   // (re)creates under the type just set
+        this._ctxType = want;
+        if (ctx && ctx.state === 'suspended') ctx.resume();
+        return ctx;
     },
 
     init() {
@@ -228,10 +249,12 @@ const app = {
     },
 
     startTimer() {
-        const ctx = this._ctx();
-        if (ctx && ctx.state === 'suspended') ctx.resume();
         // nothing set yet — send the user to Set Time instead of silently doing nothing
         if (this.state.remainingSeconds <= 0) { this.showTimeSetup(); return; }
+        // grab the audio session under the chosen category BEFORE scheduling, so the
+        // alarm actually sounds over Apple Music (iOS only honours the category at
+        // context-creation time).
+        const ctx = this._ensureAudioSession(this.state.audioMode);
         this.state.isRunning = true;
         document.getElementById('app').classList.add('running');
         this.setPlayButton(true);
@@ -244,7 +267,7 @@ const app = {
         // look-ahead audio: schedule interval bells + final alarm on the Web Audio
         // clock so they still sound if JS timers are throttled in the background.
         this._scheduleBells(ctx);
-        this._keepAliveOn(this.state.audioMode);
+        this._keepAliveOn();
         this._mediaOn('Meditation', this.state.presetName || 'Timer');
 
         this.state.timerId = setInterval(() => {
@@ -616,9 +639,13 @@ const app = {
         this.state.audioMode = (mode === 'ambient') ? 'ambient' : 'playback';
         localStorage.setItem('mandalaAudioMode', this.state.audioMode);
         this.renderAudioMode();
-        // if a meditation timer is already running, switch the live session too
+        // if a meditation timer is already running, rebuild the session under the new
+        // category and re-arm the scheduled bells (iOS only honours the category when
+        // the context is created, so a live swap needs a fresh context).
         if (this.state.isRunning) {
-            try { if (navigator.audioSession) navigator.audioSession.type = this.state.audioMode; } catch (_) {}
+            const ctx = this._ensureAudioSession(this.state.audioMode);
+            this._scheduleBells(ctx);
+            this._keepAliveOn();
         }
     },
     renderAudioMode() {
@@ -823,15 +850,11 @@ const app = {
     },
 
     // Near-silent looping buffer keeps the iOS audio session (and our clock) alive.
-    _keepAliveOn(sessionType) {
+    // The session category ('playback' vs 'ambient') is set by _ensureAudioSession()
+    // BEFORE the context is (re)built — that is the only point iOS honours it.
+    _keepAliveOn() {
         const ctx = this._ctx();
         if (!ctx || this._ka) return;
-        // iOS 16.4+: choose how our audio shares the session. Default 'playback'
-        // (alarm sounds OVER other music and ignores the silent switch). Meditation
-        // can opt into 'ambient' (mix WITH music, but obeys the silent switch).
-        try {
-            if (navigator.audioSession) navigator.audioSession.type = sessionType || 'playback';
-        } catch (_) {}
         try {
             const buf = ctx.createBuffer(1, Math.max(1, ctx.sampleRate | 0), ctx.sampleRate);
             const src = ctx.createBufferSource();
@@ -984,8 +1007,9 @@ const pomodoro = {
     toggle() { this.state.isRunning ? this.pause() : this.start(); },
 
     start() {
-        const ctx = app._ctx();
-        if (ctx && ctx.state === 'suspended') ctx.resume();
+        // grab the audio session under 'playback' BEFORE scheduling so the chime
+        // rings over Apple Music (iOS locks the category at context-creation time).
+        const ctx = app._ensureAudioSession('playback');
         this.requestNotifyPermission(); // ask on a real user gesture, not on view-open
         if (this.state.remainingSeconds <= 0) this.arm(this.state.mode);
         this.state.isRunning = true;
@@ -1361,8 +1385,9 @@ const timebox = {
 
     start() {
         if (!this.activeTask()) { this.openTasks(); return; }
-        const ctx = app._ctx();
-        if (ctx && ctx.state === 'suspended') ctx.resume();
+        // grab the audio session under 'playback' BEFORE scheduling so the chime
+        // rings over Apple Music (iOS locks the category at context-creation time).
+        const ctx = app._ensureAudioSession('playback');
         this.requestNotifyPermission(); // ask on a real user gesture, not on view-open
         if (this.state.overtime) return; // must extend/complete first
         if (this.state.remainingSeconds <= 0) this.arm(this.state.activeIndex);
