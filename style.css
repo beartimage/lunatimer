@@ -1377,6 +1377,24 @@ body::before {
 .tb-share-btn:active { transform: scale(0.94); background: rgba(230, 205, 130, 0.24); }
 .tb-share-btn svg { display: block; }
 
+/* icon-only duplicate button in the task editor list */
+.tb-copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(251, 248, 240, 0.6);
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    border-radius: 12px;
+    padding: 8px;
+    cursor: pointer;
+    flex: 0 0 auto;
+    transition: transform 0.15s ease, background 0.2s ease;
+}
+.tb-copy-btn:hover { background: rgba(66, 58, 36, 0.06); }
+.tb-copy-btn:active { transform: scale(0.94); background: rgba(66, 58, 36, 0.06); }
+.tb-copy-btn svg { display: block; }
+
 /* sub-task checklist on the running card */
 .tb-subs {
     margin-top: 12px;

@@ -2298,11 +2298,15 @@ const timebox = {
                 </div>
                 <div class="tb-edit-actions">
                     <button class="tb-edit-btn">Edit</button>
-                    <button class="tb-dup-btn" title="Duplicate">Copy</button>
+                    <button class="tb-copy-btn" title="Duplicate task" aria-label="Duplicate task">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 5.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h.5"/>
+                        </svg>
+                    </button>
                     <button class="tb-del">Delete</button>
                 </div>`;
             row.querySelector('.tb-edit-btn').onclick = () => this.editTask(i);
-            row.querySelector('.tb-dup-btn').onclick = () => this.duplicateTask(i);
+            row.querySelector('.tb-copy-btn').onclick = () => this.duplicateTask(i);
             row.querySelector('.tb-del').onclick = () => this.deleteTask(i);
             row.querySelector('.tb-grip').addEventListener('pointerdown', (e) => this._dragStart(e));
             wrap.appendChild(row);
