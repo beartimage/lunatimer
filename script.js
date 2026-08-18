@@ -41,9 +41,9 @@ const app = {
         wakeLock: null,
         soundIndex: parseInt(localStorage.getItem('mandalaSound'), 10) || 0,
         // how the alarm shares the phone's audio while music plays:
-        //   'playback' = play OVER music, ignores the silent switch (default)
-        //   'ambient'  = mix WITH music, obeys the silent switch
-        audioMode: (localStorage.getItem('mandalaAudioMode') === 'ambient') ? 'ambient' : 'playback',
+        //   'ambient'  = mix WITH music so it keeps playing, obeys the silent switch (default)
+        //   'playback' = play OVER music (interrupts it), ignores the silent switch
+        audioMode: (localStorage.getItem('mandalaAudioMode') === 'playback') ? 'playback' : 'ambient',
         presets: readJSON('smartAlarmPresets', DEFAULT_PRESETS)
     },
 
@@ -1007,9 +1007,9 @@ const pomodoro = {
     toggle() { this.state.isRunning ? this.pause() : this.start(); },
 
     start() {
-        // grab the audio session under 'playback' BEFORE scheduling so the chime
-        // rings over Apple Music (iOS locks the category at context-creation time).
-        const ctx = app._ensureAudioSession('playback');
+        // grab the audio session under 'ambient' BEFORE scheduling so the chime mixes
+        // over Apple Music without stopping it (iOS locks the category at creation time).
+        const ctx = app._ensureAudioSession('ambient');
         this.requestNotifyPermission(); // ask on a real user gesture, not on view-open
         if (this.state.remainingSeconds <= 0) this.arm(this.state.mode);
         this.state.isRunning = true;
@@ -1385,9 +1385,9 @@ const timebox = {
 
     start() {
         if (!this.activeTask()) { this.openTasks(); return; }
-        // grab the audio session under 'playback' BEFORE scheduling so the chime
-        // rings over Apple Music (iOS locks the category at context-creation time).
-        const ctx = app._ensureAudioSession('playback');
+        // grab the audio session under 'ambient' BEFORE scheduling so the chime mixes
+        // over Apple Music without stopping it (iOS locks the category at creation time).
+        const ctx = app._ensureAudioSession('ambient');
         this.requestNotifyPermission(); // ask on a real user gesture, not on view-open
         if (this.state.overtime) return; // must extend/complete first
         if (this.state.remainingSeconds <= 0) this.arm(this.state.activeIndex);
