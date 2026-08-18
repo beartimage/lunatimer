@@ -440,6 +440,9 @@ body::before {
 }
 .control-item:active { transform: scale(0.92); }
 
+/* timebox has 4 controls — tighten the spacing so they fit narrow phones */
+#view-timebox .controls { gap: clamp(16px, 7vw, 36px); }
+
 .icon-circle {
     width: clamp(50px, 15vw, 60px);
     height: clamp(50px, 15vw, 60px);
@@ -949,12 +952,27 @@ body::before {
 }
 .tb-badge.hard { color: var(--terra); background: rgba(201, 138, 115, 0.14); border: 1px solid rgba(201, 138, 115, 0.4); }
 .tb-badge.soft { color: #5f7a63; background: rgba(157, 176, 160, 0.18); border: 1px solid rgba(157, 176, 160, 0.5); }
+.tb-badge.break { color: var(--gold-c); background: rgba(181, 141, 60, 0.14); border: 1px solid rgba(181, 141, 60, 0.4); }
+.tb-note {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: clamp(4px, 0.8vh, 8px);
+    line-height: 1.35;
+}
 .tb-count {
     margin-top: clamp(8px, 1.4vh, 14px);
     font-size: 11px;
     letter-spacing: 1.4px;
     text-transform: uppercase;
     color: var(--ink-soft);
+}
+.tb-plan {
+    margin-top: 4px;
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    color: var(--gold-c);
+    min-height: 1em;
 }
 
 /* soft overtime prompt inside the card */
@@ -1054,6 +1072,10 @@ body::before {
     text-overflow: ellipsis;
 }
 .tb-item.done .tb-item-name { text-decoration: line-through; color: var(--ink-faint); }
+.tb-item.skipped { opacity: 0.6; }
+.tb-item.skipped .tb-item-name { text-decoration: line-through; color: var(--ink-faint); }
+.tb-item.skipped .tb-check { border-style: dashed; }
+.tb-item.is-break { background: rgba(230, 205, 130, 0.1); border-style: dashed; }
 .tb-item-meta {
     font-size: 10px;
     letter-spacing: 1.4px;
@@ -1148,6 +1170,142 @@ body::before {
     transition: transform 0.15s ease, background 0.2s ease;
 }
 .tb-del:active { transform: scale(0.94); background: rgba(201, 138, 115, 0.14); }
+
+/* quick-duration chips */
+.tb-chips { display: flex; gap: 8px; margin-top: -4px; margin-bottom: 4px; }
+.tb-chip {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 9px 0;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.tb-chip:hover { border-color: rgba(181, 141, 60, 0.45); color: var(--gold-c); }
+.tb-chip:active { transform: scale(0.94); }
+.tb-optional { text-transform: none; letter-spacing: 0; color: var(--ink-faint); font-size: 11px; }
+
+/* label + control on one row (auto-start, routines header) */
+.tb-row-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 18px;
+}
+.tb-row-between .pomo-sounds-label { margin: 0; }
+.btn-mini {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--gold-c);
+    background: rgba(251, 248, 240, 0.6);
+    border: 1px solid rgba(181, 141, 60, 0.5);
+    border-radius: 12px;
+    padding: 8px 13px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+}
+.btn-mini:hover { background: rgba(230, 205, 130, 0.18); }
+.btn-mini:active { transform: scale(0.94); }
+
+/* toggle switch (auto-start) */
+.tb-switch { background: none; border: none; padding: 0; cursor: pointer; }
+.tb-switch-track {
+    display: block;
+    width: 46px; height: 28px;
+    border-radius: 999px;
+    background: var(--line);
+    position: relative;
+    transition: background 0.2s ease;
+}
+.tb-switch-track.on { background: var(--gold-a); }
+.tb-switch-knob {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(66, 58, 36, 0.28);
+    transition: transform 0.2s ease;
+}
+.tb-switch-track.on .tb-switch-knob { transform: translateX(18px); }
+
+/* saved routines */
+.tb-routines { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.tb-routine {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 15px;
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 3px 10px rgba(66, 58, 36, 0.05);
+}
+
+/* session summary */
+.tb-sum-head {
+    display: flex;
+    justify-content: space-around;
+    gap: 8px;
+    padding: 20px 12px;
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    margin-bottom: 12px;
+}
+.tb-sum-stat { text-align: center; }
+.tb-sum-stat b { display: block; font-size: 24px; font-weight: 500; color: var(--gold-c); }
+.tb-sum-stat span {
+    display: block;
+    margin-top: 4px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+}
+.tb-sum-streak {
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 0.6px;
+    color: var(--ink-soft);
+    margin-bottom: 16px;
+}
+.tb-sum-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+.tb-sum-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+}
+.tb-sum-row.skipped { opacity: 0.65; }
+.tb-sum-row.skipped .tb-item-name { text-decoration: line-through; }
+.tb-sum-tag {
+    flex: 0 0 auto;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    color: var(--ink-soft);
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(66, 58, 36, 0.06);
+}
+
+/* skip (fast-forward) icon */
+.icon-fwd {
+    width: 21px; height: 21px;
+    background: currentColor;
+    -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black"><polygon points="3 4 12 12 3 20"/><polygon points="12 4 21 12 12 20"/></svg>') center / contain no-repeat;
+    mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black"><polygon points="3 4 12 12 3 20"/><polygon points="12 4 21 12 12 20"/></svg>') center / contain no-repeat;
+}
 
 /* ---------- Mode chooser cards ---------- */
 .modal-compact {

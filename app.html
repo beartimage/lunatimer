@@ -304,9 +304,11 @@
                         <div class="pomo-label" id="tb-name">No task</div>
                         <span class="tb-badge" id="tb-badge">Hard</span>
                     </div>
+                    <div class="tb-note" id="tb-note" style="display:none;"></div>
                     <div class="pomo-clock" id="tb-time">25:00</div>
                     <div class="pomo-bar"><div class="pomo-bar-fill" id="tb-bar-fill"></div></div>
                     <div class="tb-count" id="tb-count"></div>
+                    <div class="tb-plan" id="tb-plan"></div>
 
                     <!-- soft-timebox overtime prompt -->
                     <div class="tb-overtime" id="tb-overtime">
@@ -334,6 +336,10 @@
                     </span>
                     <span id="tb-play-label">Start</span>
                 </button>
+                <button type="button" class="control-item" onclick="timebox.skip()" aria-label="Skip current task">
+                    <span class="icon-circle"><span class="icon-fwd"></span></span>
+                    <span>Skip</span>
+                </button>
                 <button type="button" class="control-item" onclick="timebox.next()" aria-label="Next task">
                     <span class="icon-circle"><span class="icon-skip"></span></span>
                     <span>Next</span>
@@ -355,18 +361,59 @@
                         <input type="text" id="tb-in-name" placeholder="e.g. Write report" autocapitalize="sentences" autocorrect="off">
                         <label>Minutes</label>
                         <input type="number" id="tb-in-min" value="25" min="1" max="600" inputmode="numeric">
+                        <div class="tb-chips" id="tb-chips">
+                            <button type="button" class="tb-chip" onclick="timebox.setMinutes(5)">5</button>
+                            <button type="button" class="tb-chip" onclick="timebox.setMinutes(15)">15</button>
+                            <button type="button" class="tb-chip" onclick="timebox.setMinutes(25)">25</button>
+                            <button type="button" class="tb-chip" onclick="timebox.setMinutes(50)">50</button>
+                        </div>
+                        <label>Note <span class="tb-optional">(optional)</span></label>
+                        <input type="text" id="tb-in-note" placeholder="e.g. focus on the intro" autocapitalize="sentences" autocorrect="off">
                         <label>Type</label>
                         <div class="unit-toggle" id="tb-mode-toggle">
                             <button type="button" class="unit-btn active" data-mode="hard" onclick="timebox.setAddMode('hard')">Hard</button>
                             <button type="button" class="unit-btn" data-mode="soft" onclick="timebox.setAddMode('soft')">Soft</button>
+                            <button type="button" class="unit-btn" data-mode="break" onclick="timebox.setAddMode('break')">Break</button>
                         </div>
                         <div class="tb-mode-hint" id="tb-mode-hint">Hard: stop the moment time runs out.</div>
                         <button class="btn-primary" id="tb-add-btn" onclick="timebox.addTask()">+ Add Task</button>
                         <button class="btn-secondary" id="tb-cancel-edit" style="display:none;" onclick="timebox.cancelEdit()">Cancel Edit</button>
                     </div>
                     <div class="tb-editlist" id="tb-editlist"></div>
+
+                    <div class="tb-row-between">
+                        <label class="pomo-sounds-label">Auto-start next task</label>
+                        <button type="button" class="tb-switch" id="tb-autostart" onclick="timebox.toggleAutoStart()" aria-label="Toggle auto-start">
+                            <span class="tb-switch-track" id="tb-autostart-track"><span class="tb-switch-knob"></span></span>
+                        </button>
+                    </div>
+
+                    <div class="tb-row-between">
+                        <label class="pomo-sounds-label">Routines</label>
+                        <button class="btn-mini" onclick="timebox.saveRoutine()">Save current</button>
+                    </div>
+                    <div class="tb-routines" id="tb-routines"></div>
+
                     <label class="pomo-sounds-label">Alarm sound</label>
                     <div id="tb-sounds"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ TIMEBOX SUMMARY ============ -->
+        <div id="view-timebox-summary" class="view">
+            <div class="header">
+                <button class="nav-btn" onclick="timebox.summaryDone()">&#8592; Back</button>
+                <div class="title">Session</div>
+                <div style="width: 60px;"></div>
+            </div>
+            <div class="panel">
+                <div class="scroll-list">
+                    <div class="tb-sum-head" id="tb-sum-head"></div>
+                    <div class="tb-sum-streak" id="tb-sum-streak"></div>
+                    <div class="tb-sum-list" id="tb-sum-list"></div>
+                    <button class="btn-primary" onclick="timebox.resetAll()">Run again</button>
+                    <button class="btn-secondary" onclick="timebox.summaryDone()">Done</button>
                 </div>
             </div>
         </div>

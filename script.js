@@ -1470,8 +1470,12 @@ const timebox = {
     _editingId: null,   // task id currently being edited (null = adding new)
 
     state: {
-        tasks: [],           // [{id, name, minutes, mode:'hard'|'soft', done}]
+        tasks: [],           // [{id, name, minutes, mode:'hard'|'soft'|'break', note, done, skipped}]
         sound: 0,            // index into pomodoro.ALARMS
+        autoStart: false,    // auto-start the next task when one completes
+        routines: [],        // [{name, tasks:[{name,minutes,mode,note}]}]
+        history: [],         // [{date, completed, total, focusSec}]
+        session: null,       // per-run tally: {planned,spent,overtime,status} keyed by task id
         activeIndex: -1,     // task currently armed/running
         remainingSeconds: 0,
         totalSeconds: 0,
@@ -1481,6 +1485,7 @@ const timebox = {
         timerId: null,
         rafId: null,
     },
+    _segStart: null,         // performance.now() when the current run segment began
 
     // ---- persistence ----
     load() {
@@ -1488,32 +1493,91 @@ const timebox = {
         try { t = JSON.parse(localStorage.getItem('timeboxTasks')); } catch (e) {}
         try { s = JSON.parse(localStorage.getItem('timeboxSound')); } catch (e) {}
         if (Array.isArray(t) && t.length) {
-            this.state.tasks = t.map(x => ({
-                id: x.id, name: String(x.name || 'Task'),
-                minutes: Math.max(1, parseInt(x.minutes, 10) || 25),
-                mode: x.mode === 'soft' ? 'soft' : 'hard',
-                done: !!x.done,
-            }));
+            this.state.tasks = t.map(x => this._normTask(x));
         } else {
             // sensible starter list
             this.state.tasks = [
-                { id: 1, name: 'Plan the day', minutes: 10, mode: 'soft', done: false },
-                { id: 2, name: 'Deep work',    minutes: 50, mode: 'hard', done: false },
-                { id: 3, name: 'Emails',        minutes: 25, mode: 'hard', done: false },
+                { id: 1, name: 'Plan the day', minutes: 10, mode: 'soft', note: '', done: false, skipped: false },
+                { id: 2, name: 'Deep work',    minutes: 50, mode: 'hard', note: '', done: false, skipped: false },
+                { id: 3, name: 'Emails',        minutes: 25, mode: 'hard', note: '', done: false, skipped: false },
             ];
         }
         this._nextId = this.state.tasks.reduce((m, x) => Math.max(m, x.id), 0) + 1;
         const si = Number.isFinite(s) ? s : 0;
         this.state.sound = (si >= 0 && si < pomodoro.ALARMS.length) ? si : 0;
+        this.state.autoStart = localStorage.getItem('timeboxAutoStart') === '1';
+        try { const r = JSON.parse(localStorage.getItem('timeboxRoutines')); if (Array.isArray(r)) this.state.routines = r; } catch (e) {}
+        try { const h = JSON.parse(localStorage.getItem('timeboxHistory')); if (Array.isArray(h)) this.state.history = h; } catch (e) {}
+    },
+    _normTask(x) {
+        const mode = (x.mode === 'soft' || x.mode === 'break') ? x.mode : 'hard';
+        return {
+            id: x.id != null ? x.id : this._nextId++,
+            name: String(x.name || 'Task'),
+            minutes: Math.max(1, parseInt(x.minutes, 10) || 25),
+            mode,
+            note: String(x.note || ''),
+            done: !!x.done,
+            skipped: !!x.skipped,
+        };
     },
     saveTasks() { localStorage.setItem('timeboxTasks', JSON.stringify(this.state.tasks)); },
     saveSound() { localStorage.setItem('timeboxSound', JSON.stringify(this.state.sound)); },
+    saveAutoStart() { localStorage.setItem('timeboxAutoStart', this.state.autoStart ? '1' : '0'); },
+    saveRoutines() { localStorage.setItem('timeboxRoutines', JSON.stringify(this.state.routines)); },
+    saveHistory() { localStorage.setItem('timeboxHistory', JSON.stringify(this.state.history.slice(-120))); },
+    toggleAutoStart() { this.state.autoStart = !this.state.autoStart; this.saveAutoStart(); this._applyAutoStartUI(); },
 
     // ---- helpers ----
     activeTask() { return this.state.tasks[this.state.activeIndex] || null; },
     firstUndone() {
-        const i = this.state.tasks.findIndex(t => !t.done);
+        const i = this.state.tasks.findIndex(t => !this.isDone(t));
         return i === -1 ? (this.state.tasks.length ? 0 : -1) : i;
+    },
+    isDone(t) { return t.done || t.skipped; },
+    remainingTasks() { return this.state.tasks.filter(t => !this.isDone(t)); },
+
+    // total planned minutes over the tasks still to do, and the wall-clock ETA
+    planSummary() {
+        const rem = this.remainingTasks();
+        const mins = rem.reduce((s, t) => s + t.minutes, 0);
+        return { count: rem.length, minutes: mins };
+    },
+    fmtDur(mins) {
+        const h = Math.floor(mins / 60), m = mins % 60;
+        if (h && m) return `${h}h ${m}m`;
+        if (h) return `${h}h`;
+        return `${m}m`;
+    },
+    fmtClock(d) {
+        let h = d.getHours(), m = d.getMinutes();
+        const ap = h >= 12 ? 'PM' : 'AM';
+        h = h % 12; if (h === 0) h = 12;
+        return `${h}:${m.toString().padStart(2, '0')} ${ap}`;
+    },
+
+    // ---- per-run session tally (planned vs actual, for the summary screen) ----
+    _ensureSession() {
+        if (!this.state.session) this.state.session = { started: true, rows: {} };
+        return this.state.session;
+    },
+    _sessRow(task) {
+        const sess = this._ensureSession();
+        if (!sess.rows[task.id]) {
+            sess.rows[task.id] = { name: task.name, mode: task.mode, planned: task.minutes * 60, spent: 0, overtime: 0, status: 'pending' };
+        }
+        return sess.rows[task.id];
+    },
+    // accumulate elapsed time on the running segment into the active task's tally
+    _accrue() {
+        if (this._segStart == null) return;
+        const task = this.activeTask();
+        const elapsed = Math.max(0, (performance.now() - this._segStart) / 1000);
+        this._segStart = null;
+        if (!task) return;
+        const row = this._sessRow(task);
+        row.spent += elapsed;
+        if (row.spent > row.planned) row.overtime = row.spent - row.planned;
     },
 
     // ---- open the screen ----
@@ -1574,6 +1638,8 @@ const timebox = {
         if (this.state.remainingSeconds <= 0) this.arm(this.state.activeIndex);
         this.state.isRunning = true;
         this.setPlayLabel(true);
+        this._segStart = performance.now();
+        this._sessRow(this.activeTask());   // ensure a tally row exists
         document.getElementById('app').classList.add('running');
         app.requestWakeLock();
 
@@ -1621,6 +1687,7 @@ const timebox = {
 
     // Reset: re-arm the current task from full
     reset() {
+        this._accrue();
         app.releaseWakeLock();
         if (this.state.activeIndex >= 0) this.arm(this.state.activeIndex);
         else this.render();
@@ -1629,6 +1696,7 @@ const timebox = {
 
     // Next: advance to the following task (does NOT mark current done)
     next() {
+        this._accrue();
         this.stopTicking();
         app.releaseWakeLock();
         document.getElementById('tb-card').classList.remove('overtime');
@@ -1640,8 +1708,24 @@ const timebox = {
         document.title = 'lunatimer';
     },
 
+    // Skip: mark the current task skipped (not done) and advance
+    skip() {
+        this._accrue();
+        this.stopTicking();
+        document.getElementById('tb-card').classList.remove('overtime');
+        this.state.overtime = false;
+        const task = this.activeTask();
+        if (task) {
+            task.skipped = true; task.done = false;
+            const row = this._sessRow(task); row.status = 'skipped';
+            this.saveTasks();
+        }
+        this._advance(false);
+    },
+
     // task reached 00:00
     complete() {
+        this._accrue();
         const task = this.activeTask();
         const fg = document.visibilityState === 'visible';
         if (fg) app._clearScheduleAll();   // we'll ring live; drop the pre-scheduled chime
@@ -1665,8 +1749,8 @@ const timebox = {
             return;
         }
 
-        // hard: stop immediately, mark done, move on
-        this.notify(task, 'hard');
+        // hard / break: stop immediately, mark done, move on
+        this.notify(task, task.mode);
         this._markDoneAndAdvance();
     },
 
@@ -1690,16 +1774,52 @@ const timebox = {
 
     _markDoneAndAdvance() {
         const task = this.activeTask();
-        if (task) { task.done = true; this.saveTasks(); }
+        if (task) {
+            task.done = true; task.skipped = false;
+            const row = this._sessRow(task); row.status = 'done';
+            this.saveTasks();
+        }
+        this._advance(true);
+    },
+
+    // advance to the next unfinished task; auto-start it if enabled and the run
+    // isn't over. `wasComplete` distinguishes a natural finish from a manual skip.
+    _advance(wasComplete) {
         const nextIdx = this.firstUndone();
-        if (nextIdx >= 0 && this.state.tasks.some(t => !t.done)) {
-            this.arm(nextIdx);   // armed, paused — user reviews then starts
+        const more = nextIdx >= 0 && this.state.tasks.some(t => !this.isDone(t));
+        if (more) {
+            this.arm(nextIdx);
+            document.title = 'lunatimer';
+            if (this.state.autoStart) {
+                // skip past break tasks? no — run them too, they're intentional pauses
+                this.start();
+            }
         } else {
-            // all tasks done
+            // whole routine finished — record it and show the summary
             this._clearArm();
             this.render();
+            document.title = 'lunatimer';
+            this._finishSession();
         }
-        document.title = 'lunatimer';
+    },
+
+    // roll the session tally into history and show the summary screen
+    _finishSession() {
+        const sess = this.state.session;
+        if (!sess) return;
+        const rows = Object.values(sess.rows);
+        const completed = rows.filter(r => r.status === 'done').length;
+        const focusSec = rows.reduce((s, r) => s + r.spent, 0);
+        const dt = new Date();
+        const entry = {
+            date: `${dt.getFullYear()}-${(dt.getMonth() + 1).toString().padStart(2, '0')}-${dt.getDate().toString().padStart(2, '0')}`,
+            completed, total: rows.length, focusSec: Math.round(focusSec),
+        };
+        this.state.history.push(entry);
+        this.saveHistory();
+        this.renderSummary(rows);
+        this.state.session = null;
+        app.switchView('view-timebox-summary');
     },
 
     // toggle a task's done state from the list (without running it)
@@ -1707,9 +1827,25 @@ const timebox = {
         const t = this.state.tasks[index];
         if (!t) return;
         t.done = !t.done;
+        if (t.done) t.skipped = false;
         this.saveTasks();
         this.renderList();
         this.renderCount();
+        this.renderPlan();
+    },
+
+    // clear all done/skipped flags so the routine can run again from the top
+    resetAll() {
+        this._accrue();
+        this.stopTicking();
+        this.state.session = null;
+        this.state.tasks.forEach(t => { t.done = false; t.skipped = false; });
+        this.saveTasks();
+        document.getElementById('tb-card').classList.remove('overtime');
+        this.state.overtime = false;
+        const i = this.firstUndone();
+        if (i >= 0) this.arm(i); else this._clearArm();
+        this.render();
     },
 
     // ---- rendering ----
@@ -1723,13 +1859,19 @@ const timebox = {
         const badge = document.getElementById('tb-badge');
         if (task) {
             badge.style.display = '';
-            badge.innerText = task.mode === 'soft' ? 'Soft' : 'Hard';
+            badge.innerText = task.mode === 'soft' ? 'Soft' : task.mode === 'break' ? 'Break' : 'Hard';
             badge.className = 'tb-badge ' + task.mode;
         } else {
             badge.style.display = 'none';
         }
+        const note = document.getElementById('tb-note');
+        if (note) {
+            if (task && task.note) { note.innerText = task.note; note.style.display = ''; }
+            else { note.innerText = ''; note.style.display = 'none'; }
+        }
         this.updateText();
         this.renderCount();
+        this.renderPlan();
         this.renderList();
     },
 
@@ -1768,8 +1910,27 @@ const timebox = {
         const n = this.state.tasks.length;
         if (!n) { el.innerText = ''; return; }
         const done = this.state.tasks.filter(t => t.done).length;
+        const skipped = this.state.tasks.filter(t => t.skipped).length;
         const pos = this.state.activeIndex >= 0 ? `Task ${this.state.activeIndex + 1} of ${n}` : 'All done';
-        el.innerText = `${pos} · ${done}/${n} done`;
+        let tail = `${done}/${n} done`;
+        if (skipped) tail += ` · ${skipped} skipped`;
+        el.innerText = `${pos} · ${tail}`;
+    },
+
+    // total remaining time + finish-by ETA
+    renderPlan() {
+        const el = document.getElementById('tb-plan');
+        if (!el) return;
+        const { count, minutes } = this.planSummary();
+        if (!count || !minutes) { el.innerText = ''; return; }
+        // ETA counts down from whatever's left of the running task, not full plan
+        let secLeft = minutes * 60;
+        if (this.state.isRunning || this.state.remainingSeconds > 0) {
+            const act = this.activeTask();
+            if (act && !this.isDone(act)) secLeft = secLeft - act.minutes * 60 + this.state.remainingSeconds;
+        }
+        const eta = new Date(performance.timeOrigin + performance.now() + secLeft * 1000);
+        el.innerText = `${this.fmtDur(minutes)} left · done by ${this.fmtClock(eta)}`;
     },
 
     renderList() {
@@ -1784,12 +1945,14 @@ const timebox = {
         }
         this.state.tasks.forEach((t, i) => {
             const row = document.createElement('div');
-            row.className = 'tb-item' + (i === this.state.activeIndex ? ' active' : '') + (t.done ? ' done' : '');
+            row.className = 'tb-item' + (i === this.state.activeIndex ? ' active' : '')
+                + (t.done ? ' done' : '') + (t.skipped ? ' skipped' : '') + (t.mode === 'break' ? ' is-break' : '');
+            const meta = `${t.minutes} min · ${t.mode}${t.skipped ? ' · skipped' : ''}`;
             row.innerHTML = `
                 <div class="tb-check">&#10003;</div>
                 <div class="tb-item-body">
                     <div class="tb-item-name">${this.esc(t.name)}</div>
-                    <div class="tb-item-meta">${t.minutes} min · ${t.mode}</div>
+                    <div class="tb-item-meta">${meta}</div>
                 </div>
                 <button class="tb-item-edit" title="Edit task" aria-label="Edit task"></button>`;
             row.onclick = () => this.pickTask(i);
@@ -1820,8 +1983,10 @@ const timebox = {
         this._editingId = null;
         this._resetForm();
         this._applyModeUI();
+        this._applyAutoStartUI();
         this.renderEditList();
         this.renderSounds();
+        this.renderRoutines();
         app.switchView('view-timebox-tasks');
     },
 
@@ -1829,30 +1994,50 @@ const timebox = {
     _resetForm() {
         const nameEl = document.getElementById('tb-in-name');
         const minEl = document.getElementById('tb-in-min');
+        const noteEl = document.getElementById('tb-in-note');
         if (nameEl) nameEl.value = '';
         if (minEl) minEl.value = '25';
+        if (noteEl) noteEl.value = '';
         document.getElementById('tb-add-btn').innerText = '+ Add Task';
         document.getElementById('tb-cancel-edit').style.display = 'none';
     },
 
+    // quick-duration chips
+    setMinutes(m) {
+        const minEl = document.getElementById('tb-in-min');
+        if (minEl) minEl.value = m;
+    },
+
     setAddMode(mode) {
-        this._addMode = mode === 'soft' ? 'soft' : 'hard';
+        this._addMode = (mode === 'soft' || mode === 'break') ? mode : 'hard';
         this._applyModeUI();
     },
     _applyModeUI() {
         document.querySelectorAll('#tb-mode-toggle .unit-btn').forEach(b => {
             b.classList.toggle('active', b.dataset.mode === this._addMode);
         });
-        document.getElementById('tb-mode-hint').innerText = this._addMode === 'soft'
+        const hint = this._addMode === 'soft'
             ? 'Soft: keep a few extra minutes if you’re close.'
+            : this._addMode === 'break'
+            ? 'Break: a timed pause between tasks.'
             : 'Hard: stop the moment time runs out.';
+        document.getElementById('tb-mode-hint').innerText = hint;
+    },
+    _applyAutoStartUI() {
+        const el = document.getElementById('tb-autostart');
+        if (el) el.classList.toggle('on', this.state.autoStart);
+        const t = document.getElementById('tb-autostart-track');
+        if (t) t.classList.toggle('on', this.state.autoStart);
     },
 
     async addTask() {
         const nameEl = document.getElementById('tb-in-name');
         const minEl = document.getElementById('tb-in-min');
-        const name = (nameEl.value || '').trim();
+        const noteEl = document.getElementById('tb-in-note');
+        let name = (nameEl.value || '').trim();
+        const note = (noteEl ? noteEl.value : '').trim();
         const minutes = Math.max(1, Math.min(600, parseInt(minEl.value, 10) || 0));
+        if (!name && this._addMode === 'break') name = 'Break';
         if (!name) { await app.alertDialog('Enter a task name first.'); return; }
         if (!minutes) { await app.alertDialog('Enter a valid number of minutes.'); return; }
 
@@ -1863,6 +2048,7 @@ const timebox = {
                 t.name = name;
                 t.minutes = minutes;
                 t.mode = this._addMode;
+                t.note = note;
                 this.saveTasks();
                 // if it's the armed task and idle, re-arm so the new minutes take effect
                 const act = this.activeTask();
@@ -1876,10 +2062,11 @@ const timebox = {
         }
 
         // adding a new task
-        this.state.tasks.push({ id: this._nextId++, name, minutes, mode: this._addMode, done: false });
+        this.state.tasks.push({ id: this._nextId++, name, minutes, mode: this._addMode, note, done: false, skipped: false });
         this.saveTasks();
         nameEl.value = '';
         minEl.value = '25';
+        if (noteEl) noteEl.value = '';
         // if nothing was armed, arm the new task
         if (this.state.activeIndex < 0) this.arm(this.state.tasks.length - 1);
         this.renderEditList();
@@ -1900,6 +2087,8 @@ const timebox = {
         this._editingId = t.id;
         document.getElementById('tb-in-name').value = t.name;
         document.getElementById('tb-in-min').value = t.minutes;
+        const noteEl = document.getElementById('tb-in-note');
+        if (noteEl) noteEl.value = t.note || '';
         this.setAddMode(t.mode);
         document.getElementById('tb-add-btn').innerText = 'Save Task';
         document.getElementById('tb-cancel-edit').style.display = 'block';
@@ -1956,7 +2145,7 @@ const timebox = {
                 <div class="tb-grip" title="Drag to reorder"></div>
                 <div class="tb-item-body">
                     <div class="tb-item-name">${this.esc(t.name)}</div>
-                    <div class="tb-item-meta">${t.minutes} min · ${t.mode}${t.done ? ' · done' : ''}</div>
+                    <div class="tb-item-meta">${t.minutes} min · ${t.mode}${t.done ? ' · done' : ''}${t.skipped ? ' · skipped' : ''}${t.note ? ' · note' : ''}</div>
                 </div>
                 <div class="tb-edit-actions">
                     <button class="tb-edit-btn">Edit</button>
@@ -2033,6 +2222,137 @@ const timebox = {
         this.renderEditList();
     },
 
+    // ---- routines (saved task lists) ----
+    async saveRoutine() {
+        if (!this.state.tasks.length) { await app.alertDialog('Add some tasks first.'); return; }
+        const name = await app.promptDialog('Name this routine', '', 'Save Routine');
+        if (name == null) return;
+        const nm = name.trim();
+        if (!nm) return;
+        const snapshot = this.state.tasks.map(t => ({ name: t.name, minutes: t.minutes, mode: t.mode, note: t.note || '' }));
+        const existing = this.state.routines.findIndex(r => r.name.toLowerCase() === nm.toLowerCase());
+        if (existing >= 0) this.state.routines[existing] = { name: nm, tasks: snapshot };
+        else this.state.routines.push({ name: nm, tasks: snapshot });
+        this.saveRoutines();
+        this.renderRoutines();
+    },
+
+    async loadRoutine(index) {
+        const r = this.state.routines[index];
+        if (!r) return;
+        const ok = await app.confirmDialog(`Load “${r.name}”? This replaces your current task list.`, 'Load Routine');
+        if (!ok) return;
+        this.stopTicking();
+        this.state.session = null;
+        this.state.tasks = r.tasks.map(x => this._normTask(x));
+        this._nextId = this.state.tasks.reduce((m, x) => Math.max(m, x.id), 0) + 1;
+        this.saveTasks();
+        const i = this.firstUndone();
+        if (i >= 0) this.arm(i); else this._clearArm();
+        this.renderEditList();
+        this.renderCount();
+    },
+
+    async deleteRoutine(index) {
+        const r = this.state.routines[index];
+        if (!r) return;
+        const ok = await app.confirmDialog(`Delete routine “${r.name}”?`, 'Delete Routine');
+        if (!ok) return;
+        this.state.routines.splice(index, 1);
+        this.saveRoutines();
+        this.renderRoutines();
+    },
+
+    renderRoutines() {
+        const wrap = document.getElementById('tb-routines');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        if (!this.state.routines.length) {
+            const e = document.createElement('div');
+            e.className = 'tb-empty';
+            e.innerText = 'No saved routines yet.';
+            wrap.appendChild(e);
+            return;
+        }
+        this.state.routines.forEach((r, i) => {
+            const mins = r.tasks.reduce((s, t) => s + (parseInt(t.minutes, 10) || 0), 0);
+            const row = document.createElement('div');
+            row.className = 'tb-routine';
+            row.innerHTML = `
+                <div class="tb-item-body">
+                    <div class="tb-item-name">${this.esc(r.name)}</div>
+                    <div class="tb-item-meta">${r.tasks.length} tasks · ${this.fmtDur(mins)}</div>
+                </div>
+                <div class="tb-edit-actions">
+                    <button class="tb-edit-btn">Load</button>
+                    <button class="tb-del">Delete</button>
+                </div>`;
+            row.querySelector('.tb-edit-btn').onclick = () => this.loadRoutine(i);
+            row.querySelector('.tb-del').onclick = () => this.deleteRoutine(i);
+            wrap.appendChild(row);
+        });
+    },
+
+    // ---- session summary ----
+    renderSummary(rows) {
+        const done = rows.filter(r => r.status === 'done').length;
+        const skipped = rows.filter(r => r.status === 'skipped').length;
+        const focus = rows.reduce((s, r) => s + r.spent, 0);
+        const over = rows.reduce((s, r) => s + r.overtime, 0);
+        const head = document.getElementById('tb-sum-head');
+        if (head) {
+            head.innerHTML =
+                `<div class="tb-sum-stat"><b>${done}</b><span>completed</span></div>` +
+                `<div class="tb-sum-stat"><b>${skipped}</b><span>skipped</span></div>` +
+                `<div class="tb-sum-stat"><b>${this.clock(focus)}</b><span>focus time</span></div>` +
+                (over > 30 ? `<div class="tb-sum-stat"><b>${this.clock(over)}</b><span>overtime</span></div>` : '');
+        }
+        const list = document.getElementById('tb-sum-list');
+        if (list) {
+            list.innerHTML = '';
+            rows.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'tb-sum-row ' + r.status;
+                const delta = r.spent - r.planned;
+                let tag = '';
+                if (r.status === 'skipped') tag = 'skipped';
+                else if (Math.abs(delta) < 30) tag = 'on time';
+                else if (delta > 0) tag = `+${this.clock(delta)}`;
+                else tag = `-${this.clock(-delta)}`;
+                div.innerHTML = `
+                    <div class="tb-item-body">
+                        <div class="tb-item-name">${this.esc(r.name)}</div>
+                        <div class="tb-item-meta">planned ${this.clock(r.planned)} · actual ${this.clock(r.spent)}</div>
+                    </div>
+                    <div class="tb-sum-tag">${tag}</div>`;
+                list.appendChild(div);
+            });
+        }
+        this.renderStreak();
+    },
+
+    // consecutive-day streak from history
+    _streak() {
+        if (!this.state.history.length) return 0;
+        const days = [...new Set(this.state.history.map(h => h.date))].sort();
+        let streak = 1;
+        for (let i = days.length - 1; i > 0; i--) {
+            const a = new Date(days[i] + 'T00:00:00');
+            const b = new Date(days[i - 1] + 'T00:00:00');
+            const diff = Math.round((a - b) / 86400000);
+            if (diff === 1) streak++; else break;
+        }
+        return streak;
+    },
+    renderStreak() {
+        const el = document.getElementById('tb-sum-streak');
+        if (!el) return;
+        const s = this._streak();
+        const sessions = this.state.history.length;
+        el.innerText = s > 1 ? `${s}-day streak · ${sessions} sessions logged` : `${sessions} session${sessions === 1 ? '' : 's'} logged`;
+    },
+    summaryDone() { this.open(); },
+
     // ---- alarm sound (shares pomodoro's ALARMS) ----
     renderSounds() {
         const list = document.getElementById('tb-sounds');
@@ -2067,6 +2387,8 @@ const timebox = {
         if (!('Notification' in window) || Notification.permission !== 'granted') return;
         const body = mode === 'soft'
             ? `“${task.name}” — time's up. Wrap up or add a few minutes.`
+            : mode === 'break'
+            ? `Break over — back to it.`
             : `“${task.name}” — time's up. Move on.`;
         try { new Notification('Timebox', { body, silent: false }); } catch (e) {}
     },
