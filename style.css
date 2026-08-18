@@ -917,6 +917,7 @@ body::before {
     background: rgba(251, 248, 240, 0.5);
     margin: 22px 0 4px;
     overflow: hidden;
+    flex: 0 0 auto;
 }
 .sound-acc-head {
     width: 100%;
