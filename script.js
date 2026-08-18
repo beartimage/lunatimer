@@ -274,6 +274,9 @@ const app = {
         this._scheduleBells(ctx);
         this._keepAliveOn();
         this._mediaOn('Meditation', this.state.presetName || 'Timer');
+        // prime a media-element copy of the final bell (rings even over other apps'
+        // music when the timer ends while on screen)
+        this.prepareAlarmClip({ kind: 'bowl', def: this.currentSound() });
 
         this.state.timerId = setInterval(() => {
             const remMs = this.state.endTime - performance.now();
@@ -285,7 +288,9 @@ const app = {
                 if (document.visibilityState === 'visible') {
                     this._clearScheduleAll();       // drop the pre-scheduled final so we don't double-ring
                     this.pauseTimer();
-                    this._ringNowBowl(this.currentSound(), {});
+                    // primed media element first (audible over music, no gesture needed);
+                    // fall back to a live Web Audio ring if the clip isn't ready.
+                    if (!this.playAlarmClip()) this._ringNowBowl(this.currentSound(), {});
                 } else {
                     this.pauseTimer();
                 }
@@ -816,13 +821,20 @@ const app = {
     _bowlAt(def, at, opts = {}) {
         const ctx = this._ctx();
         if (!ctx) return [];
+        const nodes = this._buildBowl(ctx, ctx.destination, def, at, opts);
+        this._sched.push({ nodes, at });
+        return nodes;
+    },
+
+    // build a bowl tone on ANY context/destination (live or offline render)
+    _buildBowl(ctx, dest, def, at, opts = {}) {
         const dur = opts.dur || def.dur;
         const pitch = opts.pitch || 1;
         const master = ctx.createGain();
         master.gain.setValueAtTime(0.0001, at);
         master.gain.linearRampToValueAtTime(0.9, at + 0.08);
         master.gain.exponentialRampToValueAtTime(0.0008, at + dur);
-        master.connect(ctx.destination);
+        master.connect(dest);
         const nodes = [];
         def.partials.forEach(p => {
             const osc = ctx.createOscillator();
@@ -834,7 +846,6 @@ const app = {
             osc.start(at); osc.stop(at + dur);
             nodes.push(osc);
         });
-        this._sched.push({ nodes, at });
         return nodes;
     },
 
@@ -842,6 +853,13 @@ const app = {
     _seqAt(alarm, at) {
         const ctx = this._ctx();
         if (!ctx) return [];
+        const nodes = this._buildSeq(ctx, ctx.destination, alarm, at);
+        this._sched.push({ nodes, at });
+        return nodes;
+    },
+
+    // build an alarm sequence on ANY context/destination (live or offline render)
+    _buildSeq(ctx, dest, alarm, at) {
         const nodes = [];
         alarm.notes.forEach(n => {
             const start = at + n.t;
@@ -852,11 +870,10 @@ const app = {
             g.gain.setValueAtTime(0.0001, start);
             g.gain.linearRampToValueAtTime(n.g, start + 0.03);
             g.gain.exponentialRampToValueAtTime(0.0006, start + n.d);
-            osc.connect(g); g.connect(ctx.destination);
+            osc.connect(g); g.connect(dest);
             osc.start(start); osc.stop(start + n.d);
             nodes.push(osc);
         });
-        this._sched.push({ nodes, at });
         return nodes;
     },
 
@@ -892,6 +909,92 @@ const app = {
         if (!ctx) return;
         const go = () => this._seqAt(alarm, this.audioCtx.currentTime + 0.04);
         (ctx.state === 'running') ? go() : ctx.resume().then(go).catch(go);
+    },
+
+    // ---- primed media-element alarm ----
+    // Web Audio can't be resumed from a non-gesture callback while another app
+    // (music) owns the audio focus. A <audio> element that was UNLOCKED during the
+    // Start tap can, however, be replayed later with no gesture — so we pre-render
+    // this run's alarm to a WAV and fire it from the element at 00:00.
+    _alarmEl: null,
+    _alarmURL: null,     // object URL of the rendered alarm clip (ready to play)
+    _silentURL: null,    // tiny silent clip used to unlock the element on a gesture
+
+    _encodeWav(samples, sampleRate) {
+        const n = samples.length;
+        const buf = new ArrayBuffer(44 + n * 2);
+        const v = new DataView(buf);
+        const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+        w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE');
+        w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+        v.setUint16(22, 1, true); v.setUint32(24, sampleRate, true);
+        v.setUint32(28, sampleRate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+        w(36, 'data'); v.setUint32(40, n * 2, true);
+        let o = 44;
+        for (let i = 0; i < n; i++) {
+            const s = Math.max(-1, Math.min(1, samples[i]));
+            v.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7FFF, true); o += 2;
+        }
+        return new Blob([buf], { type: 'audio/wav' });
+    },
+
+    // render an alarm descriptor to a WAV blob URL via OfflineAudioContext
+    async _renderAlarmURL(desc) {
+        const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        if (!OAC) return null;
+        const sr = 44100;
+        let dur = 0.3;
+        if (desc.kind === 'bowl') {
+            dur = (desc.def.dur || 3) + 0.3;
+        } else {
+            desc.alarm.notes.forEach(n => { dur = Math.max(dur, n.t + n.d + 0.25); });
+        }
+        const octx = new OAC(1, Math.max(1, Math.ceil(sr * dur)), sr);
+        if (desc.kind === 'bowl') this._buildBowl(octx, octx.destination, desc.def, 0, {});
+        else this._buildSeq(octx, octx.destination, desc.alarm, 0);
+        const rendered = await octx.startRendering();
+        return URL.createObjectURL(this._encodeWav(rendered.getChannelData(0), sr));
+    },
+
+    // Called on the Start tap (a user gesture): unlock the element and pre-render
+    // this run's alarm clip so it's ready to fire at completion.
+    prepareAlarmClip(desc) {
+        if (!this._alarmEl) {
+            const el = new Audio();
+            el.preload = 'auto';
+            el.setAttribute('playsinline', '');
+            this._alarmEl = el;
+        }
+        if (!this._silentURL) {
+            this._silentURL = URL.createObjectURL(this._encodeWav(new Float32Array(2205), 44100));
+        }
+        // unlock: playing (silent) content inside the gesture lets us play() later
+        try {
+            const el = this._alarmEl;
+            el.muted = false; el.volume = 1; el.src = this._silentURL;
+            const p = el.play();
+            if (p && p.then) p.then(() => { try { el.pause(); el.currentTime = 0; } catch (_) {} }).catch(() => {});
+        } catch (_) {}
+        // render the real clip (async); mark ready when its URL is set
+        this._alarmURL = null;
+        this._renderAlarmURL(desc)
+            .then(url => { if (url) this._alarmURL = url; })
+            .catch(() => {});
+    },
+
+    // Fire the pre-rendered alarm through the primed element. Returns false if it
+    // isn't ready, so callers can fall back to a live Web Audio ring.
+    playAlarmClip() {
+        const el = this._alarmEl;
+        if (!el || !this._alarmURL) return false;
+        try {
+            el.muted = false; el.volume = 1;
+            el.src = this._alarmURL;
+            el.currentTime = 0;
+            const p = el.play();
+            if (p && p.catch) p.catch(() => {});
+            return true;
+        } catch (_) { return false; }
     },
 
     // Near-silent looping buffer keeps the iOS audio session (and our clock) alive.
@@ -1073,6 +1176,7 @@ const pomodoro = {
         }
         app._keepAliveOn();
         app._mediaOn(this.modeLabel(this.state.mode), 'Pomodoro');
+        app.prepareAlarmClip({ kind: 'seq', alarm: this.ALARMS[this.state.settings.sound] || this.ALARMS[0] });
 
         this.state.timerId = setInterval(() => {
             const remMs = this.state.endTime - performance.now();
@@ -1147,7 +1251,7 @@ const pomodoro = {
         if (fg) app._clearScheduleAll();   // we'll ring live; drop the pre-scheduled chime
         this.stopTicking();
         // Foreground: ring live (audible over music). Background: pre-scheduled chime already fired.
-        if (fg) app._ringNowSeq(this.ALARMS[this.state.settings.sound] || this.ALARMS[0]);
+        if (fg && !app.playAlarmClip()) app._ringNowSeq(this.ALARMS[this.state.settings.sound] || this.ALARMS[0]);
         app.releaseWakeLock();
 
         if (finished === 'work') {
@@ -1459,6 +1563,7 @@ const timebox = {
         }
         app._keepAliveOn();
         app._mediaOn(this.activeTask() ? this.activeTask().name : 'Timebox', 'Timebox');
+        app.prepareAlarmClip({ kind: 'seq', alarm: pomodoro.ALARMS[this.state.sound] || pomodoro.ALARMS[0] });
 
         this.state.timerId = setInterval(() => {
             const remMs = this.state.endTime - performance.now();
@@ -1517,7 +1622,7 @@ const timebox = {
         if (fg) app._clearScheduleAll();   // we'll ring live; drop the pre-scheduled chime
         this.stopTicking();
         // Foreground: ring live (audible over music). Background: pre-scheduled chime already fired.
-        if (fg) app._ringNowSeq(pomodoro.ALARMS[this.state.sound] || pomodoro.ALARMS[0]);
+        if (fg && !app.playAlarmClip()) app._ringNowSeq(pomodoro.ALARMS[this.state.sound] || pomodoro.ALARMS[0]);
         app.releaseWakeLock();
 
         if (!task) { this.render(); return; }
