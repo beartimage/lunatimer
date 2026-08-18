@@ -956,12 +956,10 @@ body::before {
 .sound-acc-body {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease;
+    transition: max-height 0.35s ease;
 }
 .sound-acc.open .sound-acc-body {
-    max-height: 640px;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    max-height: 1600px;
 }
 .sound-acc-body > #sounds-list,
 .sound-acc-body > #pomo-sounds,
