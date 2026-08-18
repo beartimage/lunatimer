@@ -277,6 +277,7 @@ const app = {
         // prime a media-element copy of the final bell (rings even over other apps'
         // music when the timer ends while on screen)
         this.prepareAlarmClip({ kind: 'bowl', def: this.currentSound() });
+        this.typeAlarmTip();
 
         this.state.timerId = setInterval(() => {
             const remMs = this.state.endTime - performance.now();
@@ -347,11 +348,35 @@ const app = {
         document.getElementById('app').classList.remove('running');
         this.setPlayButton(false);
         this.releaseWakeLock();
+        this.clearAlarmTip();
         this.updateDisplay();
     },
 
     setPlayButton(running) {
         document.getElementById('play-label').innerText = running ? 'Pause' : 'Start';
+    },
+
+    // Type out a gentle reminder (like someone writing a message) when a run starts.
+    typeAlarmTip() {
+        const el = document.getElementById('alarm-tip');
+        if (!el) return;
+        const msg = 'Make sure your phone isn’t on silent so the bell can ring.';
+        clearInterval(this._tipTimer);
+        el.textContent = '';
+        el.classList.add('typing');
+        let i = 0;
+        this._tipTimer = setInterval(() => {
+            el.textContent = msg.slice(0, ++i);
+            if (i >= msg.length) {
+                clearInterval(this._tipTimer);
+                el.classList.remove('typing');
+            }
+        }, 40);
+    },
+    clearAlarmTip() {
+        clearInterval(this._tipTimer);
+        const el = document.getElementById('alarm-tip');
+        if (el) { el.textContent = ''; el.classList.remove('typing'); }
     },
 
     bellsRemaining() {

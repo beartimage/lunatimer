@@ -396,6 +396,28 @@ body::before {
 }
 
 /* ---------- Controls ---------- */
+.alarm-tip {
+    min-height: 1.25em;
+    margin: 2px auto 0;
+    max-width: 300px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--gold-c);
+    opacity: 0.9;
+}
+.alarm-tip.typing::after {
+    content: '';
+    display: inline-block;
+    width: 1px;
+    height: 1em;
+    margin-left: 1px;
+    background: currentColor;
+    vertical-align: -0.15em;
+    animation: tipCaret 0.7s step-end infinite;
+}
+@keyframes tipCaret { 50% { opacity: 0; } }
+
 .controls {
     width: 100%;
     display: flex;
