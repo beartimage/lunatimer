@@ -1114,7 +1114,7 @@ app.init();
 // =====================================================================
 const pomodoro = {
     // ordered phase machine: 'work' | 'short' | 'long'
-    DEFAULTS: { work: 25, short: 5, long: 15, interval: 4, sound: 0 },
+    DEFAULTS: { work: 25, short: 5, long: 15, interval: 4, sound: 0, goal: 8, autoStart: false },
 
     // 5 distinct completion alarms — each a short synthesized sequence of notes.
     // freq in Hz, t = start offset (s), dur = tone length (s), type = wave, g = gain.
@@ -1136,6 +1136,8 @@ const pomodoro = {
         mode: 'work',        // current phase
         cycle: 0,            // completed work sessions in the current long-break cycle
         totalDone: 0,        // lifetime completed pomodoros (stats)
+        task: '',            // optional "working on…" label for the session
+        history: [],         // [{date, focusSec, task}] — one entry per finished focus
         remainingSeconds: 0,
         totalSeconds: 0,
         isRunning: false,
@@ -1155,6 +1157,8 @@ const pomodoro = {
         }
         this.state.totalDone = (stats && stats.totalDone) || 0;
         this.state.cycle = (stats && stats.cycle) || 0;
+        try { const h = JSON.parse(localStorage.getItem('pomodoroHistory')); if (Array.isArray(h)) this.state.history = h; } catch (e) {}
+        this.state.task = localStorage.getItem('pomodoroTask') || '';
     },
     saveSettingsStore() {
         localStorage.setItem('pomodoroSettings', JSON.stringify(this.state.settings));
@@ -1164,6 +1168,25 @@ const pomodoro = {
             totalDone: this.state.totalDone,
             cycle: this.state.cycle,
         }));
+    },
+    saveHistory() { localStorage.setItem('pomodoroHistory', JSON.stringify(this.state.history.slice(-200))); },
+
+    // date helpers (local calendar day)
+    _dateKey(d) { return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`; },
+    _todayKey() { return this._dateKey(new Date()); },
+
+    // ---- session task label ----
+    setTask(v) { this.state.task = (v || '').slice(0, 80); localStorage.setItem('pomodoroTask', this.state.task); },
+
+    // ---- auto-start next phase ----
+    toggleAutoStart() {
+        this.state.settings.autoStart = !this.state.settings.autoStart;
+        this.saveSettingsStore();
+        this._applyAutoStartUI();
+    },
+    _applyAutoStartUI() {
+        const t = document.getElementById('pomo-autostart-track');
+        if (t) t.classList.toggle('on', !!this.state.settings.autoStart);
     },
 
     // ---- durations ----
@@ -1299,15 +1322,18 @@ const pomodoro = {
 
         if (finished === 'work') {
             this.state.totalDone += 1;
+            this.state.history.push({ date: this._todayKey(), focusSec: this.modeSeconds('work'), task: this.state.task });
+            this.saveHistory();
         }
         const next = this.nextMode(finished === 'work');
         this.saveStats();
 
         this.notify(finished, next);
 
-        // auto-arm the next phase (user presses Start to begin it)
+        // auto-arm the next phase; auto-start it too when the toggle is on
         this.arm(next);
         document.title = 'lunatimer';
+        if (this.state.settings.autoStart) this.start();
     },
 
     // ---- rendering ----
@@ -1317,9 +1343,24 @@ const pomodoro = {
 
     render() {
         document.getElementById('pomo-mode').innerText = this.modeLabel(this.state.mode);
+        const ti = document.getElementById('pomo-task');
+        if (ti && document.activeElement !== ti) ti.value = this.state.task;
         this.renderPills();
         this.updateText();
         this.renderDots();
+        this.renderToday();
+    },
+
+    // "N / goal today" progress under the dial
+    renderToday() {
+        const el = document.getElementById('pomo-today');
+        if (!el) return;
+        const goal = this.state.settings.goal || 0;
+        const today = this.state.history.filter(h => h.date === this._todayKey()).length;
+        const pct = goal ? Math.min(100, Math.round((today / goal) * 100)) : 0;
+        el.innerHTML = `
+            <div class="pomo-today-row"><span>Today</span><span><strong>${today}</strong>${goal ? ' / ' + goal : ''}</span></div>
+            ${goal ? `<div class="pomo-today-bar"><div class="pomo-today-fill" style="width:${pct}%"></div></div>` : ''}`;
     },
 
     updateText() {
@@ -1387,8 +1428,11 @@ const pomodoro = {
         document.getElementById('pomo-short').value = s.short;
         document.getElementById('pomo-long').value = s.long;
         document.getElementById('pomo-interval').value = s.interval;
+        document.getElementById('pomo-goal').value = s.goal;
+        this._applyAutoStartUI();
         this.renderAlarms();
         this.renderStats();
+        this.renderChart();
         app.switchView('view-pomo-settings');
     },
 
@@ -1428,6 +1472,7 @@ const pomodoro = {
         s.short    = clamp(document.getElementById('pomo-short').value, 1, 120, s.short);
         s.long     = clamp(document.getElementById('pomo-long').value, 1, 120, s.long);
         s.interval = clamp(document.getElementById('pomo-interval').value, 1, 12, s.interval);
+        s.goal     = clamp(document.getElementById('pomo-goal').value, 0, 50, s.goal);
         this.saveSettingsStore();
         // if idle, re-arm current phase so the new duration takes effect immediately
         if (!this.state.isRunning) this.arm(this.state.mode);
@@ -1438,19 +1483,71 @@ const pomodoro = {
     renderStats() {
         const total = this.state.settings.interval;
         const cur = this.state.mode === 'long' ? total : (this.state.cycle % total);
+        const today = this.state.history.filter(h => h.date === this._todayKey()).length;
+        const goal = this.state.settings.goal || 0;
         document.getElementById('pomo-stats').innerHTML =
+            `Today: <strong>${today}${goal ? ' / ' + goal : ''}</strong><br>` +
             `Completed pomodoros: <strong>${this.state.totalDone}</strong><br>` +
             `Current cycle: <strong>${cur}/${total}</strong>`;
     },
 
+    // consecutive-day streak from history
+    _streak() {
+        if (!this.state.history.length) return 0;
+        const days = [...new Set(this.state.history.map(h => h.date))].sort();
+        let streak = 1;
+        for (let i = days.length - 1; i > 0; i--) {
+            const diff = Math.round((new Date(days[i] + 'T00:00:00') - new Date(days[i - 1] + 'T00:00:00')) / 86400000);
+            if (diff === 1) streak++; else break;
+        }
+        return streak;
+    },
+
+    // last-7-days bar chart of pomodoros/day + streak line
+    renderChart() {
+        const wrap = document.getElementById('pomo-chart');
+        if (!wrap) return;
+        const byDay = {};
+        this.state.history.forEach(h => { byDay[h.date] = (byDay[h.date] || 0) + 1; });
+        const anchor = new Date();
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(anchor.getTime() - i * 86400000);
+            const key = this._dateKey(d);
+            days.push({ count: byDay[key] || 0, label: ['S', 'M', 'T', 'W', 'T', 'F', 'S'][d.getDay()] });
+        }
+        const max = Math.max(1, ...days.map(d => d.count));
+        wrap.innerHTML = '';
+        days.forEach(d => {
+            const col = document.createElement('div');
+            col.className = 'tb-bar-col';
+            const h = d.count ? Math.max(6, Math.round((d.count / max) * 100)) : 2;
+            col.innerHTML = `
+                <div class="tb-bar-val">${d.count || ''}</div>
+                <div class="tb-bar-wrap"><div class="tb-bar${d.count ? '' : ' empty'}" style="height:${h}%"></div></div>
+                <div class="tb-bar-day">${d.label}</div>`;
+            wrap.appendChild(col);
+        });
+        const sEl = document.getElementById('pomo-streak');
+        if (sEl) {
+            const s = this._streak();
+            const n = this.state.history.length;
+            sEl.innerText = s > 1 ? `${s}-day streak · ${n} pomodoros logged` : `${n} pomodoro${n === 1 ? '' : 's'} logged`;
+        }
+    },
+
     async resetStats() {
-        const ok = await app.confirmDialog('Reset completed-pomodoro stats?', 'Reset Stats');
+        const ok = await app.confirmDialog('Reset pomodoro stats and history?', 'Reset Stats');
         if (!ok) return;
         this.state.totalDone = 0;
         this.state.cycle = 0;
+        this.state.history = [];
         this.saveStats();
+        this.saveHistory();
         this.renderStats();
+        this.renderChart();
         this.renderDots();
+        this.renderToday();
     },
 
     // ---- notifications ----

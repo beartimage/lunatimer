@@ -244,11 +244,13 @@
 
                 <div class="pomo-card" id="pomo-card">
                     <div class="pomo-label" id="pomo-mode">Focus</div>
+                    <input type="text" class="pomo-task-input" id="pomo-task" maxlength="80" placeholder="What are you working on?" autocapitalize="sentences" autocorrect="off" oninput="pomodoro.setTask(this.value)" aria-label="Session task">
                     <div class="pomo-clock" id="pomo-time">25:00</div>
                     <div class="pomo-bar">
                         <div class="pomo-bar-fill" id="pomo-bar-fill"></div>
                     </div>
                     <div class="pomo-dots" id="pomo-dots"></div>
+                    <div class="pomo-today" id="pomo-today"></div>
                 </div>
             </div>
 
@@ -289,6 +291,14 @@
                         <input type="number" id="pomo-long" min="1" max="120" inputmode="numeric">
                         <label>Long break after (focus sessions)</label>
                         <input type="number" id="pomo-interval" min="1" max="12" inputmode="numeric">
+                        <label>Daily goal (pomodoros, 0 = off)</label>
+                        <input type="number" id="pomo-goal" min="0" max="50" inputmode="numeric">
+                    </div>
+                    <div class="tb-row-between">
+                        <label class="pomo-sounds-label">Auto-start next phase</label>
+                        <button type="button" class="tb-switch" id="pomo-autostart" onclick="pomodoro.toggleAutoStart()" aria-label="Toggle auto-start">
+                            <span class="tb-switch-track" id="pomo-autostart-track"><span class="tb-switch-knob"></span></span>
+                        </button>
                     </div>
                     <div class="sound-acc" id="pomo-sound-acc">
                         <button type="button" class="sound-acc-head" aria-expanded="false" onclick="app.toggleSoundAcc(this)">
@@ -301,6 +311,9 @@
                         </div>
                     </div>
                     <div class="pomo-stats" id="pomo-stats"></div>
+                    <label class="pomo-sounds-label">This week</label>
+                    <div class="tb-chart" id="pomo-chart"></div>
+                    <div class="tb-sum-streak" id="pomo-streak"></div>
                 </div>
                 <button class="btn-primary" onclick="pomodoro.saveSettings()">Save</button>
                 <button class="btn-secondary" onclick="pomodoro.resetStats()">Reset Stats</button>
