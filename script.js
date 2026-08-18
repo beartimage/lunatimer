@@ -2443,11 +2443,15 @@ const timebox = {
                 </div>
                 <div class="tb-edit-actions">
                     <button class="tb-edit-btn">Load</button>
-                    <button class="tb-dup-btn">Share</button>
+                    <button class="tb-share-btn" title="Share routine" aria-label="Share routine">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 15V4"/><path d="M8.5 7.5 12 4l3.5 3.5"/><path d="M6 12v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6"/>
+                        </svg>
+                    </button>
                     <button class="tb-del">Delete</button>
                 </div>`;
             row.querySelector('.tb-edit-btn').onclick = () => this.loadRoutine(i);
-            row.querySelector('.tb-dup-btn').onclick = () => this.shareRoutine(i);
+            row.querySelector('.tb-share-btn').onclick = () => this.shareRoutine(i);
             row.querySelector('.tb-del').onclick = () => this.deleteRoutine(i);
             wrap.appendChild(row);
         });

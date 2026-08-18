@@ -1342,6 +1342,7 @@ body::before {
 @keyframes tbUndoIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 /* duplicate / share button in edit + routine rows */
+.tb-dup-btn {
     background: rgba(251, 248, 240, 0.6);
     border: 1px solid var(--line);
     color: var(--ink-soft);
@@ -1357,6 +1358,24 @@ body::before {
 }
 .tb-dup-btn:active { transform: scale(0.94); background: rgba(66, 58, 36, 0.06); }
 .tb-routine-btns { display: flex; gap: 8px; }
+
+/* icon-only share button on saved routines */
+.tb-share-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(251, 248, 240, 0.6);
+    border: 1px solid rgba(181, 141, 60, 0.5);
+    color: var(--gold-c);
+    border-radius: 12px;
+    padding: 8px;
+    cursor: pointer;
+    flex: 0 0 auto;
+    transition: transform 0.15s ease, background 0.2s ease;
+}
+.tb-share-btn:hover { background: rgba(230, 205, 130, 0.18); }
+.tb-share-btn:active { transform: scale(0.94); background: rgba(230, 205, 130, 0.24); }
+.tb-share-btn svg { display: block; }
 
 /* sub-task checklist on the running card */
 .tb-subs {
