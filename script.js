@@ -1343,6 +1343,11 @@ const pomodoro = {
 
     render() {
         document.getElementById('pomo-mode').innerText = this.modeLabel(this.state.mode);
+        const card = document.getElementById('pomo-card');
+        if (card) {
+            card.classList.remove('phase-work', 'phase-short', 'phase-long');
+            card.classList.add('phase-' + this.state.mode);
+        }
         const ti = document.getElementById('pomo-task');
         if (ti && document.activeElement !== ti) ti.value = this.state.task;
         this.renderPills();

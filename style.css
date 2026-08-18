@@ -927,6 +927,30 @@ body::before {
     background: linear-gradient(90deg, var(--gold-c), var(--gold-a));
     transition: width 0.3s ease;
 }
+
+/* per-phase dial tinting — gold Focus, sage Short break, blue Long break */
+.pomo-card.phase-short .pomo-bar-fill,
+.pomo-card.phase-short .pomo-today-fill {
+    background: linear-gradient(90deg, #5f7d63, #7fa382);
+    box-shadow: 0 1px 4px rgba(95, 125, 99, 0.35);
+}
+.pomo-card.phase-short .pomo-label { color: #5f7d63; }
+.pomo-card.phase-short .pomo-today-row strong { color: #5f7d63; }
+.pomo-card.phase-short .pomo-dots .dot.filled {
+    background: linear-gradient(160deg, #7fa382, #5f7d63);
+    border-color: #5f7d63;
+}
+.pomo-card.phase-long .pomo-bar-fill,
+.pomo-card.phase-long .pomo-today-fill {
+    background: linear-gradient(90deg, #4a6b82, #6f97b3);
+    box-shadow: 0 1px 4px rgba(74, 107, 130, 0.35);
+}
+.pomo-card.phase-long .pomo-label { color: #4a6b82; }
+.pomo-card.phase-long .pomo-today-row strong { color: #4a6b82; }
+.pomo-card.phase-long .pomo-dots .dot.filled {
+    background: linear-gradient(160deg, #6f97b3, #4a6b82);
+    border-color: #4a6b82;
+}
 .icon-skip {
     width: 21px; height: 21px;
     background: currentColor;
