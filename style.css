@@ -399,12 +399,12 @@ body::before {
 .alarm-tip {
     min-height: 1.25em;
     margin: 2px auto 0;
-    max-width: 300px;
     text-align: center;
-    font-size: 13px;
-    line-height: 1.45;
-    color: var(--gold-c);
-    opacity: 0.9;
+    white-space: nowrap;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--ink);
+    opacity: 0.75;
 }
 .alarm-tip.typing::after {
     content: '';

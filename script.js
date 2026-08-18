@@ -360,7 +360,7 @@ const app = {
     typeAlarmTip() {
         const el = document.getElementById('alarm-tip');
         if (!el) return;
-        const msg = 'Make sure your phone isn’t on silent so the bell can ring.';
+        const msg = 'Turn off silent mode to hear the bell.';
         clearInterval(this._tipTimer);
         el.textContent = '';
         el.classList.add('typing');
