@@ -309,6 +309,7 @@
                     <div class="pomo-bar"><div class="pomo-bar-fill" id="tb-bar-fill"></div></div>
                     <div class="tb-count" id="tb-count"></div>
                     <div class="tb-plan" id="tb-plan"></div>
+                    <div class="tb-subs" id="tb-subs" style="display:none;"></div>
 
                     <!-- soft-timebox overtime prompt -->
                     <div class="tb-overtime" id="tb-overtime">
@@ -369,6 +370,13 @@
                         </div>
                         <label>Note <span class="tb-optional">(optional)</span></label>
                         <input type="text" id="tb-in-note" placeholder="e.g. focus on the intro" autocapitalize="sentences" autocorrect="off">
+                        <label>Checklist <span class="tb-optional">(optional)</span></label>
+                        <div class="tb-sub-add">
+                            <input type="text" id="tb-in-sub" placeholder="Add a step" autocapitalize="sentences" autocorrect="off"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();timebox.addFormSub();}">
+                            <button type="button" class="btn-mini" onclick="timebox.addFormSub()">Add</button>
+                        </div>
+                        <div class="tb-sublist" id="tb-in-sublist"></div>
                         <label>Type</label>
                         <div class="unit-toggle" id="tb-mode-toggle">
                             <button type="button" class="unit-btn active" data-mode="hard" onclick="timebox.setAddMode('hard')">Hard</button>
@@ -390,7 +398,10 @@
 
                     <div class="tb-row-between">
                         <label class="pomo-sounds-label">Routines</label>
-                        <button class="btn-mini" onclick="timebox.saveRoutine()">Save current</button>
+                        <div class="tb-routine-btns">
+                            <button class="btn-mini" onclick="timebox.openManager()">Manage</button>
+                            <button class="btn-mini" onclick="timebox.saveRoutine()">Save current</button>
+                        </div>
                     </div>
                     <div class="tb-routines" id="tb-routines"></div>
 
@@ -411,9 +422,36 @@
                 <div class="scroll-list">
                     <div class="tb-sum-head" id="tb-sum-head"></div>
                     <div class="tb-sum-streak" id="tb-sum-streak"></div>
+                    <label class="pomo-sounds-label">This week</label>
+                    <div class="tb-chart" id="tb-chart"></div>
+                    <label class="pomo-sounds-label">Tasks</label>
                     <div class="tb-sum-list" id="tb-sum-list"></div>
                     <button class="btn-primary" onclick="timebox.resetAll()">Run again</button>
                     <button class="btn-secondary" onclick="timebox.summaryDone()">Done</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ TIMEBOX ROUTINE MANAGER ============ -->
+        <div id="view-timebox-manager" class="view">
+            <div class="header">
+                <button class="nav-btn" onclick="timebox.openTasks()">&#8592; Back</button>
+                <div class="title">Manage Routines</div>
+                <div style="width: 60px;"></div>
+            </div>
+            <div class="panel">
+                <div class="scroll-list">
+                    <div class="tb-mgr-hint">Move tasks between two routines with the arrow buttons.</div>
+                    <div class="tb-mgr-grid">
+                        <div class="tb-mgr-side">
+                            <select class="tb-mgr-sel" id="tb-mgr-left-sel" onchange="timebox.setMgr('left', +this.value)"></select>
+                            <div class="tb-mgr-col" id="tb-mgr-left"></div>
+                        </div>
+                        <div class="tb-mgr-side">
+                            <select class="tb-mgr-sel" id="tb-mgr-right-sel" onchange="timebox.setMgr('right', +this.value)"></select>
+                            <div class="tb-mgr-col" id="tb-mgr-right"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1468,6 +1468,8 @@ const timebox = {
     _nextId: 1,
     _addMode: 'hard',   // mode selected in the add-task form
     _editingId: null,   // task id currently being edited (null = adding new)
+    _formSubs: [],      // sub-tasks being edited in the add/edit form
+    _pendingShare: null,// a routine parsed from a ?r= share link, awaiting import
 
     state: {
         tasks: [],           // [{id, name, minutes, mode:'hard'|'soft'|'break', note, done, skipped}]
@@ -1497,9 +1499,9 @@ const timebox = {
         } else {
             // sensible starter list
             this.state.tasks = [
-                { id: 1, name: 'Plan the day', minutes: 10, mode: 'soft', note: '', done: false, skipped: false },
-                { id: 2, name: 'Deep work',    minutes: 50, mode: 'hard', note: '', done: false, skipped: false },
-                { id: 3, name: 'Emails',        minutes: 25, mode: 'hard', note: '', done: false, skipped: false },
+                { id: 1, name: 'Plan the day', minutes: 10, mode: 'soft', note: '', subs: [], done: false, skipped: false },
+                { id: 2, name: 'Deep work',    minutes: 50, mode: 'hard', note: '', subs: [], done: false, skipped: false },
+                { id: 3, name: 'Emails',        minutes: 25, mode: 'hard', note: '', subs: [], done: false, skipped: false },
             ];
         }
         this._nextId = this.state.tasks.reduce((m, x) => Math.max(m, x.id), 0) + 1;
@@ -1511,12 +1513,17 @@ const timebox = {
     },
     _normTask(x) {
         const mode = (x.mode === 'soft' || x.mode === 'break') ? x.mode : 'hard';
+        const subs = Array.isArray(x.subs)
+            ? x.subs.map(s => ({ text: String((s && s.text != null ? s.text : s) || '').slice(0, 80), done: !!(s && s.done) }))
+                   .filter(s => s.text)
+            : [];
         return {
             id: x.id != null ? x.id : this._nextId++,
             name: String(x.name || 'Task'),
             minutes: Math.max(1, parseInt(x.minutes, 10) || 25),
             mode,
             note: String(x.note || ''),
+            subs,
             done: !!x.done,
             skipped: !!x.skipped,
         };
@@ -1869,10 +1876,35 @@ const timebox = {
             if (task && task.note) { note.innerText = task.note; note.style.display = ''; }
             else { note.innerText = ''; note.style.display = 'none'; }
         }
+        this.renderSubs();
         this.updateText();
         this.renderCount();
         this.renderPlan();
         this.renderList();
+    },
+
+    // checklist of sub-tasks for the active task, tickable while it runs
+    renderSubs() {
+        const wrap = document.getElementById('tb-subs');
+        if (!wrap) return;
+        const task = this.activeTask();
+        wrap.innerHTML = '';
+        if (!task || !task.subs || !task.subs.length) { wrap.style.display = 'none'; return; }
+        wrap.style.display = '';
+        task.subs.forEach((s, i) => {
+            const row = document.createElement('div');
+            row.className = 'tb-sub' + (s.done ? ' done' : '');
+            row.innerHTML = `<span class="tb-sub-check">&#10003;</span><span class="tb-sub-text">${this.esc(s.text)}</span>`;
+            row.onclick = () => this.toggleSub(i);
+            wrap.appendChild(row);
+        });
+    },
+    toggleSub(i) {
+        const task = this.activeTask();
+        if (!task || !task.subs || !task.subs[i]) return;
+        task.subs[i].done = !task.subs[i].done;
+        this.saveTasks();
+        this.renderSubs();
     },
 
     updateText() {
@@ -1995,11 +2027,43 @@ const timebox = {
         const nameEl = document.getElementById('tb-in-name');
         const minEl = document.getElementById('tb-in-min');
         const noteEl = document.getElementById('tb-in-note');
+        const subEl = document.getElementById('tb-in-sub');
         if (nameEl) nameEl.value = '';
         if (minEl) minEl.value = '25';
         if (noteEl) noteEl.value = '';
+        if (subEl) subEl.value = '';
+        this._formSubs = [];
+        this.renderFormSubs();
         document.getElementById('tb-add-btn').innerText = '+ Add Task';
         document.getElementById('tb-cancel-edit').style.display = 'none';
+    },
+
+    // ---- sub-task editing (in the add/edit form) ----
+    addFormSub() {
+        const el = document.getElementById('tb-in-sub');
+        if (!el) return;
+        const text = (el.value || '').trim().slice(0, 80);
+        if (!text) return;
+        this._formSubs.push({ text, done: false });
+        el.value = '';
+        el.focus();
+        this.renderFormSubs();
+    },
+    removeFormSub(i) {
+        this._formSubs.splice(i, 1);
+        this.renderFormSubs();
+    },
+    renderFormSubs() {
+        const wrap = document.getElementById('tb-in-sublist');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        this._formSubs.forEach((s, i) => {
+            const row = document.createElement('div');
+            row.className = 'tb-subedit';
+            row.innerHTML = `<span>${this.esc(s.text)}</span><button class="tb-sub-x" aria-label="Remove">&times;</button>`;
+            row.querySelector('.tb-sub-x').onclick = () => this.removeFormSub(i);
+            wrap.appendChild(row);
+        });
     },
 
     // quick-duration chips
@@ -2049,6 +2113,7 @@ const timebox = {
                 t.minutes = minutes;
                 t.mode = this._addMode;
                 t.note = note;
+                t.subs = this._formSubs.map(s => ({ text: s.text, done: !!s.done }));
                 this.saveTasks();
                 // if it's the armed task and idle, re-arm so the new minutes take effect
                 const act = this.activeTask();
@@ -2062,13 +2127,30 @@ const timebox = {
         }
 
         // adding a new task
-        this.state.tasks.push({ id: this._nextId++, name, minutes, mode: this._addMode, note, done: false, skipped: false });
+        this.state.tasks.push({ id: this._nextId++, name, minutes, mode: this._addMode, note, subs: this._formSubs.map(s => ({ text: s.text, done: false })), done: false, skipped: false });
         this.saveTasks();
         nameEl.value = '';
         minEl.value = '25';
         if (noteEl) noteEl.value = '';
+        this._formSubs = [];
+        this.renderFormSubs();
         // if nothing was armed, arm the new task
         if (this.state.activeIndex < 0) this.arm(this.state.tasks.length - 1);
+        this.renderEditList();
+        this.renderCount();
+    },
+
+    // duplicate a task in the editor
+    duplicateTask(index) {
+        const t = this.state.tasks[index];
+        if (!t) return;
+        const copy = this._normTask({
+            name: t.name + ' copy', minutes: t.minutes, mode: t.mode, note: t.note,
+            subs: (t.subs || []).map(s => ({ text: s.text, done: false })),
+        });
+        this.state.tasks.splice(index + 1, 0, copy);
+        if (index < this.state.activeIndex) this.state.activeIndex += 1;
+        this.saveTasks();
         this.renderEditList();
         this.renderCount();
     },
@@ -2089,6 +2171,8 @@ const timebox = {
         document.getElementById('tb-in-min').value = t.minutes;
         const noteEl = document.getElementById('tb-in-note');
         if (noteEl) noteEl.value = t.note || '';
+        this._formSubs = (t.subs || []).map(s => ({ text: s.text, done: !!s.done }));
+        this.renderFormSubs();
         this.setAddMode(t.mode);
         document.getElementById('tb-add-btn').innerText = 'Save Task';
         document.getElementById('tb-cancel-edit').style.display = 'block';
@@ -2102,6 +2186,7 @@ const timebox = {
     cancelEdit() {
         this._editingId = null;
         this._addMode = 'hard';
+        this._formSubs = [];
         this._resetForm();
         this._applyModeUI();
         this.renderEditList();
@@ -2145,13 +2230,15 @@ const timebox = {
                 <div class="tb-grip" title="Drag to reorder"></div>
                 <div class="tb-item-body">
                     <div class="tb-item-name">${this.esc(t.name)}</div>
-                    <div class="tb-item-meta">${t.minutes} min · ${t.mode}${t.done ? ' · done' : ''}${t.skipped ? ' · skipped' : ''}${t.note ? ' · note' : ''}</div>
+                    <div class="tb-item-meta">${t.minutes} min · ${t.mode}${(t.subs && t.subs.length) ? ' · ' + t.subs.length + ' steps' : ''}${t.done ? ' · done' : ''}${t.skipped ? ' · skipped' : ''}${t.note ? ' · note' : ''}</div>
                 </div>
                 <div class="tb-edit-actions">
                     <button class="tb-edit-btn">Edit</button>
+                    <button class="tb-dup-btn" title="Duplicate">Copy</button>
                     <button class="tb-del">Delete</button>
                 </div>`;
             row.querySelector('.tb-edit-btn').onclick = () => this.editTask(i);
+            row.querySelector('.tb-dup-btn').onclick = () => this.duplicateTask(i);
             row.querySelector('.tb-del').onclick = () => this.deleteTask(i);
             row.querySelector('.tb-grip').addEventListener('pointerdown', (e) => this._dragStart(e));
             wrap.appendChild(row);
@@ -2229,12 +2316,19 @@ const timebox = {
         if (name == null) return;
         const nm = name.trim();
         if (!nm) return;
-        const snapshot = this.state.tasks.map(t => ({ name: t.name, minutes: t.minutes, mode: t.mode, note: t.note || '' }));
+        const snapshot = this._snapshot(this.state.tasks);
         const existing = this.state.routines.findIndex(r => r.name.toLowerCase() === nm.toLowerCase());
         if (existing >= 0) this.state.routines[existing] = { name: nm, tasks: snapshot };
         else this.state.routines.push({ name: nm, tasks: snapshot });
         this.saveRoutines();
         this.renderRoutines();
+    },
+    // strip a task list down to a portable snapshot (no ids / run state)
+    _snapshot(tasks) {
+        return tasks.map(t => ({
+            name: t.name, minutes: t.minutes, mode: t.mode, note: t.note || '',
+            subs: (t.subs || []).map(s => ({ text: s.text })),
+        }));
     },
 
     async loadRoutine(index) {
@@ -2285,12 +2379,85 @@ const timebox = {
                 </div>
                 <div class="tb-edit-actions">
                     <button class="tb-edit-btn">Load</button>
+                    <button class="tb-dup-btn">Share</button>
                     <button class="tb-del">Delete</button>
                 </div>`;
             row.querySelector('.tb-edit-btn').onclick = () => this.loadRoutine(i);
+            row.querySelector('.tb-dup-btn').onclick = () => this.shareRoutine(i);
             row.querySelector('.tb-del').onclick = () => this.deleteRoutine(i);
             wrap.appendChild(row);
         });
+    },
+
+    // ---- share a routine via URL ----
+    // encode {name,tasks} to a URL-safe base64 payload behind ?r=
+    _encodeRoutine(r) {
+        const compact = {
+            n: r.name,
+            t: r.tasks.map(t => ({
+                n: t.name, m: t.minutes,
+                d: t.mode === 'soft' ? 1 : t.mode === 'break' ? 2 : 0,
+                o: t.note || undefined,
+                s: (t.subs && t.subs.length) ? t.subs.map(x => x.text) : undefined,
+            })),
+        };
+        const json = JSON.stringify(compact);
+        const b64 = btoa(unescape(encodeURIComponent(json)));
+        return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    },
+    _decodeRoutine(code) {
+        try {
+            let b64 = code.replace(/-/g, '+').replace(/_/g, '/');
+            while (b64.length % 4) b64 += '=';
+            const json = decodeURIComponent(escape(atob(b64)));
+            const c = JSON.parse(json);
+            if (!c || !Array.isArray(c.t)) return null;
+            const modes = ['hard', 'soft', 'break'];
+            return {
+                name: String(c.n || 'Shared routine').slice(0, 60),
+                tasks: c.t.slice(0, 40).map(t => ({
+                    name: String(t.n || 'Task').slice(0, 60),
+                    minutes: Math.max(1, Math.min(600, parseInt(t.m, 10) || 25)),
+                    mode: modes[t.d] || 'hard',
+                    note: String(t.o || ''),
+                    subs: Array.isArray(t.s) ? t.s.slice(0, 20).map(x => ({ text: String(x).slice(0, 80) })) : [],
+                })),
+            };
+        } catch (e) { return null; }
+    },
+    async shareRoutine(index) {
+        const r = this.state.routines[index];
+        if (!r) return;
+        const code = this._encodeRoutine(r);
+        const url = `${location.origin}/timebox?r=${code}`;
+        let shared = false;
+        if (navigator.share) {
+            try { await navigator.share({ title: `Timebox routine: ${r.name}`, url }); shared = true; } catch (e) {}
+        }
+        if (!shared) {
+            try { await navigator.clipboard.writeText(url); await app.alertDialog('Share link copied to clipboard.', 'Share Routine'); }
+            catch (e) { await app.promptDialog('Copy this link to share:', url, 'Share Routine'); }
+        }
+    },
+    // called on load if a ?r= link is present
+    async _maybeImportShared() {
+        let code = null;
+        try { code = new URLSearchParams(location.search).get('r'); } catch (e) {}
+        if (!code) return;
+        const r = this._decodeRoutine(code);
+        // clean the URL so a refresh doesn't re-prompt
+        try { history.replaceState(null, '', location.pathname); } catch (e) {}
+        if (!r) return;
+        const mins = r.tasks.reduce((s, t) => s + t.minutes, 0);
+        const ok = await app.confirmDialog(`Import shared routine “${r.name}” (${r.tasks.length} tasks · ${this.fmtDur(mins)})?`, 'Shared Routine');
+        if (!ok) return;
+        // avoid name clash
+        let nm = r.name;
+        if (this.state.routines.some(x => x.name.toLowerCase() === nm.toLowerCase())) nm = nm + ' (shared)';
+        this.state.routines.push({ name: nm, tasks: this._snapshot(r.tasks.map(x => this._normTask(x))) });
+        this.saveRoutines();
+        // show the tasks editor so the imported routine is visible in the list
+        this.openTasks();
     },
 
     // ---- session summary ----
@@ -2350,8 +2517,105 @@ const timebox = {
         const s = this._streak();
         const sessions = this.state.history.length;
         el.innerText = s > 1 ? `${s}-day streak · ${sessions} sessions logged` : `${sessions} session${sessions === 1 ? '' : 's'} logged`;
+        this.renderChart();
     },
+
+    // ---- weekly focus chart (last 7 days, minutes per day) ----
+    renderChart() {
+        const wrap = document.getElementById('tb-chart');
+        if (!wrap) return;
+        // sum focusSec per calendar day
+        const byDay = {};
+        this.state.history.forEach(h => { byDay[h.date] = (byDay[h.date] || 0) + (h.focusSec || 0); });
+        // build the last 7 day keys ending today, using the newest history date as "today"
+        const dates = Object.keys(byDay).sort();
+        const anchor = dates.length ? new Date(dates[dates.length - 1] + 'T00:00:00') : null;
+        if (!anchor) { wrap.innerHTML = '<div class="tb-empty">No focus logged yet.</div>'; return; }
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(anchor.getTime() - i * 86400000);
+            const key = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
+            days.push({ key, mins: Math.round((byDay[key] || 0) / 60), label: ['S', 'M', 'T', 'W', 'T', 'F', 'S'][d.getDay()] });
+        }
+        const max = Math.max(1, ...days.map(d => d.mins));
+        wrap.innerHTML = '';
+        days.forEach(d => {
+            const col = document.createElement('div');
+            col.className = 'tb-bar-col';
+            const h = d.mins ? Math.max(6, Math.round((d.mins / max) * 100)) : 2;
+            col.innerHTML = `
+                <div class="tb-bar-val">${d.mins || ''}</div>
+                <div class="tb-bar-wrap"><div class="tb-bar${d.mins ? '' : ' empty'}" style="height:${h}%"></div></div>
+                <div class="tb-bar-day">${d.label}</div>`;
+            wrap.appendChild(col);
+        });
+    },
+
     summaryDone() { this.open(); },
+
+    // ---- routine manager (drag tasks between routines) ----
+    openManager() {
+        this._mgrLeft = this._mgrLeft || 0;
+        this._mgrRight = this._mgrRight || (this.state.routines.length > 1 ? 1 : 0);
+        if (this._mgrLeft >= this.state.routines.length) this._mgrLeft = 0;
+        if (this._mgrRight >= this.state.routines.length) this._mgrRight = Math.max(0, this.state.routines.length - 1);
+        this.renderManager();
+        app.switchView('view-timebox-manager');
+    },
+    setMgr(side, index) {
+        if (side === 'left') this._mgrLeft = index; else this._mgrRight = index;
+        this.renderManager();
+    },
+    renderManager() {
+        const sel = (id, cur, onchange) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.innerHTML = '';
+            this.state.routines.forEach((r, i) => {
+                const o = document.createElement('option');
+                o.value = i; o.textContent = r.name;
+                if (i === cur) o.selected = true;
+                el.appendChild(o);
+            });
+        };
+        sel('tb-mgr-left-sel', this._mgrLeft);
+        sel('tb-mgr-right-sel', this._mgrRight);
+        this._renderMgrCol('tb-mgr-left', this._mgrLeft, 'left');
+        this._renderMgrCol('tb-mgr-right', this._mgrRight, 'right');
+    },
+    _renderMgrCol(id, rIndex, side) {
+        const wrap = document.getElementById(id);
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        const r = this.state.routines[rIndex];
+        if (!r) { wrap.innerHTML = '<div class="tb-empty">No routine.</div>'; return; }
+        if (!r.tasks.length) { wrap.innerHTML = '<div class="tb-empty">Empty.</div>'; }
+        r.tasks.forEach((t, i) => {
+            const row = document.createElement('div');
+            row.className = 'tb-mgr-item';
+            const dir = side === 'left' ? '→' : '←';
+            row.innerHTML = `
+                <div class="tb-item-body">
+                    <div class="tb-item-name">${this.esc(t.name)}</div>
+                    <div class="tb-item-meta">${t.minutes} min · ${t.mode}</div>
+                </div>
+                <button class="tb-mgr-move" title="Move to other routine">${dir}</button>`;
+            row.querySelector('.tb-mgr-move').onclick = () => this.moveTaskBetween(side, i);
+            wrap.appendChild(row);
+        });
+    },
+    moveTaskBetween(fromSide, i) {
+        const fromIdx = fromSide === 'left' ? this._mgrLeft : this._mgrRight;
+        const toIdx = fromSide === 'left' ? this._mgrRight : this._mgrLeft;
+        const from = this.state.routines[fromIdx];
+        const to = this.state.routines[toIdx];
+        if (!from || !to || from === to) return;
+        const [task] = from.tasks.splice(i, 1);
+        if (task) to.tasks.push(task);
+        this.saveRoutines();
+        this.renderManager();
+        this.renderRoutines();
+    },
 
     // ---- alarm sound (shares pomodoro's ALARMS) ----
     renderSounds() {
@@ -2402,6 +2666,9 @@ timebox.load();
 
 // wire up deep-link routing now that all three timers exist
 app.initRouter();
+
+// import a shared routine if the URL carries ?r=
+timebox._maybeImportShared();
 
 // ---- Keep the layout sized to the visible viewport (on-screen keyboard aware) ----
 // On iOS/Android the software keyboard does NOT shrink the layout viewport, so a
