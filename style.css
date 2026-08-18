@@ -292,7 +292,7 @@ body::before {
     flex: 0 0 auto;
     width: var(--dial);
     height: var(--dial);
-    margin: auto;
+    margin: auto auto 0;
     position: relative;
     display: flex;
     justify-content: center;
@@ -398,7 +398,7 @@ body::before {
 /* ---------- Controls ---------- */
 .alarm-tip {
     min-height: 1.25em;
-    margin: 2px auto 0;
+    margin: 14px auto auto;
     text-align: center;
     white-space: nowrap;
     font-size: 15px;
