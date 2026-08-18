@@ -325,6 +325,11 @@
                 <div class="tb-list" id="tb-list"></div>
             </div>
 
+            <div class="tb-undo" id="tb-undo" aria-live="polite">
+                <span id="tb-undo-label">Skipped</span>
+                <button type="button" class="tb-undo-btn" onclick="timebox.undoSkip()">Undo</button>
+            </div>
+
             <div class="controls">
                 <button type="button" class="control-item" onclick="timebox.reset()" aria-label="Reset current task">
                     <span class="icon-circle"><span class="icon-reset"></span></span>

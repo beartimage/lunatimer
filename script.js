@@ -1626,6 +1626,7 @@ const timebox = {
     // tap a task in the main list -> arm it
     pickTask(index) {
         if (index === this.state.activeIndex && !this.state.isRunning && !this.state.overtime) return;
+        this.clearUndoSkip();
         this.stopTicking();
         app.releaseWakeLock();
         this.arm(index);
@@ -1723,11 +1724,60 @@ const timebox = {
         this.state.overtime = false;
         const task = this.activeTask();
         if (task) {
+            // remember enough to fully restore the task if this was a misfire
+            this._undoSkip = {
+                id: task.id,
+                index: this.state.activeIndex,
+                remaining: this.state.remainingSeconds,
+                total: this.state.totalSeconds,
+                sessStatus: (this.state.session && this.state.session.rows[task.id]) ? this.state.session.rows[task.id].status : null,
+            };
             task.skipped = true; task.done = false;
             const row = this._sessRow(task); row.status = 'skipped';
             this.saveTasks();
+            this.showUndoSkip(task.name);
         }
         this._advance(false);
+    },
+
+    // restore the most recently skipped task and re-arm it
+    undoSkip() {
+        const u = this._undoSkip;
+        this._undoSkip = null;
+        this.clearUndoSkip();
+        if (!u) return;
+        const idx = this.state.tasks.findIndex(t => t.id === u.id);
+        if (idx < 0) return;
+        const task = this.state.tasks[idx];
+        task.skipped = false; task.done = false;
+        if (this.state.session && this.state.session.rows[u.id]) {
+            this.state.session.rows[u.id].status = u.sessStatus || 'pending';
+        }
+        this.saveTasks();
+        this.stopTicking();
+        this.arm(idx);
+        // arm() resets to a full task; restore where the timer actually was
+        if (u.remaining > 0) {
+            this.state.totalSeconds = u.total || task.minutes * 60;
+            this.state.remainingSeconds = u.remaining;
+        }
+        this.render();
+        document.title = 'lunatimer';
+    },
+
+    showUndoSkip(name) {
+        const bar = document.getElementById('tb-undo');
+        if (!bar) return;
+        const label = document.getElementById('tb-undo-label');
+        if (label) label.innerText = `Skipped “${name}”`;
+        bar.classList.add('show');
+        clearTimeout(this._undoTimer);
+        this._undoTimer = setTimeout(() => this.clearUndoSkip(), 6000);
+    },
+    clearUndoSkip() {
+        clearTimeout(this._undoTimer);
+        const bar = document.getElementById('tb-undo');
+        if (bar) bar.classList.remove('show');
     },
 
     // task reached 00:00
