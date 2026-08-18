@@ -670,6 +670,14 @@ const app = {
     // ---- Settings / sounds ----
     currentSound() { return SOUNDS[this.state.soundIndex] || SOUNDS[0]; },
 
+    // collapsible music picker: tap the header to reveal all options
+    toggleSoundAcc(headEl) {
+        const acc = headEl.closest('.sound-acc');
+        if (!acc) return;
+        const open = acc.classList.toggle('open');
+        headEl.setAttribute('aria-expanded', open ? 'true' : 'false');
+    },
+
     renderSounds() {
         const list = document.getElementById('sounds-list');
         list.innerHTML = '';
@@ -692,6 +700,8 @@ const app = {
             };
             list.appendChild(div);
         });
+        const cur = document.getElementById('med-sound-current');
+        if (cur) cur.innerText = (SOUNDS[this.state.soundIndex] || SOUNDS[0]).name;
     },
 
     // choose how the alarm shares audio with other apps' music (meditation only)
@@ -1404,6 +1414,8 @@ const pomodoro = {
             };
             list.appendChild(div);
         });
+        const cur = document.getElementById('pomo-sound-current');
+        if (cur) cur.innerText = (this.ALARMS[this.state.settings.sound] || this.ALARMS[0]).name;
     },
 
     saveSettings() {
@@ -2735,6 +2747,8 @@ const timebox = {
             };
             list.appendChild(div);
         });
+        const cur = document.getElementById('tb-sound-current');
+        if (cur) cur.innerText = (pomodoro.ALARMS[this.state.sound] || pomodoro.ALARMS[0]).name;
     },
 
     // ---- notifications ----

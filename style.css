@@ -910,6 +910,64 @@ body::before {
     margin: 22px 0 10px;
 }
 
+/* collapsible music picker (hidden accordion) */
+.sound-acc {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(251, 248, 240, 0.5);
+    margin: 22px 0 4px;
+    overflow: hidden;
+}
+.sound-acc-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 15px 17px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+}
+.sound-acc-label {
+    font-size: 11px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+}
+.sound-acc-current {
+    margin-left: auto;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gold-c);
+}
+.sound-acc-chevron {
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--ink-soft);
+    border-bottom: 2px solid var(--ink-soft);
+    transform: rotate(45deg);
+    transition: transform 0.25s ease;
+    margin: -3px 2px 0 4px;
+    flex: 0 0 auto;
+}
+.sound-acc.open .sound-acc-chevron { transform: rotate(-135deg); margin-top: 2px; }
+.sound-acc-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+.sound-acc.open .sound-acc-body {
+    max-height: 640px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.sound-acc-body > #sounds-list,
+.sound-acc-body > #pomo-sounds,
+.sound-acc-body > #tb-sounds { padding: 4px 12px 12px; }
+.sound-acc-body #sounds-list { flex: none; }
+
 /* ---------- Timebox ---------- */
 /* card stays fixed; only the task list scrolls */
 .tb-stage {

@@ -197,7 +197,16 @@
                 <div style="width: 60px;"></div>
             </div>
             <div class="panel">
-                <div class="scroll-list" id="sounds-list"></div>
+                <div class="sound-acc" id="med-sound-acc">
+                    <button type="button" class="sound-acc-head" aria-expanded="false" onclick="app.toggleSoundAcc(this)">
+                        <span class="sound-acc-label">Music</span>
+                        <span class="sound-acc-current" id="med-sound-current"></span>
+                        <span class="sound-acc-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="sound-acc-body">
+                        <div class="scroll-list" id="sounds-list"></div>
+                    </div>
+                </div>
                 <div class="sound-mode">
                     <div class="sm-title">When music is playing</div>
                     <div class="seg" role="group" aria-label="Alarm audio mode">
@@ -281,8 +290,16 @@
                         <label>Long break after (focus sessions)</label>
                         <input type="number" id="pomo-interval" min="1" max="12" inputmode="numeric">
                     </div>
-                    <label class="pomo-sounds-label">Alarm sound</label>
-                    <div id="pomo-sounds"></div>
+                    <div class="sound-acc" id="pomo-sound-acc">
+                        <button type="button" class="sound-acc-head" aria-expanded="false" onclick="app.toggleSoundAcc(this)">
+                            <span class="sound-acc-label">Music</span>
+                            <span class="sound-acc-current" id="pomo-sound-current"></span>
+                            <span class="sound-acc-chevron" aria-hidden="true"></span>
+                        </button>
+                        <div class="sound-acc-body">
+                            <div id="pomo-sounds"></div>
+                        </div>
+                    </div>
                     <div class="pomo-stats" id="pomo-stats"></div>
                 </div>
                 <button class="btn-primary" onclick="pomodoro.saveSettings()">Save</button>
@@ -410,8 +427,16 @@
                     </div>
                     <div class="tb-routines" id="tb-routines"></div>
 
-                    <label class="pomo-sounds-label">Alarm sound</label>
-                    <div id="tb-sounds"></div>
+                    <div class="sound-acc" id="tb-sound-acc">
+                        <button type="button" class="sound-acc-head" aria-expanded="false" onclick="app.toggleSoundAcc(this)">
+                            <span class="sound-acc-label">Music</span>
+                            <span class="sound-acc-current" id="tb-sound-current"></span>
+                            <span class="sound-acc-chevron" aria-hidden="true"></span>
+                        </button>
+                        <div class="sound-acc-body">
+                            <div id="tb-sounds"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
