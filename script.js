@@ -280,13 +280,14 @@ const app = {
             this.state.remainingSeconds = Math.max(0, Math.ceil(remMs / 1000));
 
             if (remMs <= 0) {
-                const missed = !this._alarmDidFire();   // check before pauseTimer tears audio down
-                this.pauseTimer();
-                // foreground fallback: if the scheduled bell never fired (audio clock
-                // frozen while music held the session), ring it live now.
-                if (missed) {
-                    const c = this._ensureAudioSession(this.state.audioMode);
-                    if (c) this._bowlAt(this.currentSound(), c.currentTime + 0.03, {});
+                // Foreground: ring the bell LIVE (reliable & audible over other apps'
+                // music). Background: trust the pre-scheduled bell on the audio clock.
+                if (document.visibilityState === 'visible') {
+                    this._clearScheduleAll();       // drop the pre-scheduled final so we don't double-ring
+                    this.pauseTimer();
+                    this._ringNowBowl(this.currentSound(), {});
+                } else {
+                    this.pauseTimer();
                 }
                 this.switchView('view-complete');
             } else {
@@ -319,12 +320,6 @@ const app = {
         const c = this.audioCtx;
         return !!(c && c.state === 'running' && this._finalAlarmAt != null
             && c.currentTime >= this._finalAlarmAt - 0.05);
-    },
-
-    // ring a note-sequence alarm (Pomodoro/Timebox) live, right now
-    _fireSeqNow(alarm) {
-        const c = this._ensureAudioSession('ambient');
-        if (c) this._seqAt(alarm, c.currentTime + 0.03);
     },
 
     // per-frame paint so the ring/knob glide continuously
@@ -876,6 +871,29 @@ const app = {
         this._sched = [];
     },
 
+    // Cancel EVERY pending scheduled sound, including one about to fire — used at
+    // completion when we're going to ring the alarm live instead.
+    _clearScheduleAll() {
+        this._sched.forEach(e => e.nodes.forEach(o => { try { o.stop(); } catch (_) {} }));
+        this._sched = [];
+    },
+
+    // Ring a bell/sequence live RIGHT NOW, waiting for the context to actually
+    // resume first (iOS resume() is async; another app holding audio focus can
+    // leave us 'suspended'/'interrupted' with a frozen clock).
+    _ringNowBowl(def, opts) {
+        const ctx = this._ensureAudioSession(this.state.audioMode);
+        if (!ctx) return;
+        const go = () => this._bowlAt(def, this.audioCtx.currentTime + 0.04, opts || {});
+        (ctx.state === 'running') ? go() : ctx.resume().then(go).catch(go);
+    },
+    _ringNowSeq(alarm) {
+        const ctx = this._ensureAudioSession(this.state.audioMode);
+        if (!ctx) return;
+        const go = () => this._seqAt(alarm, this.audioCtx.currentTime + 0.04);
+        (ctx.state === 'running') ? go() : ctx.resume().then(go).catch(go);
+    },
+
     // Near-silent looping buffer keeps the iOS audio session (and our clock) alive.
     // The session category ('playback' vs 'ambient') is set by _ensureAudioSession()
     // BEFORE the context is (re)built — that is the only point iOS honours it.
@@ -1125,10 +1143,11 @@ const pomodoro = {
     // phase reached 00:00
     complete() {
         const finished = this.state.mode;
-        const missed = !app._alarmDidFire();   // check before stopTicking tears audio down
+        const fg = document.visibilityState === 'visible';
+        if (fg) app._clearScheduleAll();   // we'll ring live; drop the pre-scheduled chime
         this.stopTicking();
-        // foreground fallback: ring live if the scheduled chime's clock was frozen by music
-        if (missed) app._fireSeqNow(this.ALARMS[this.state.settings.sound] || this.ALARMS[0]);
+        // Foreground: ring live (audible over music). Background: pre-scheduled chime already fired.
+        if (fg) app._ringNowSeq(this.ALARMS[this.state.settings.sound] || this.ALARMS[0]);
         app.releaseWakeLock();
 
         if (finished === 'work') {
@@ -1494,10 +1513,11 @@ const timebox = {
     // task reached 00:00
     complete() {
         const task = this.activeTask();
-        const missed = !app._alarmDidFire();   // check before stopTicking tears audio down
+        const fg = document.visibilityState === 'visible';
+        if (fg) app._clearScheduleAll();   // we'll ring live; drop the pre-scheduled chime
         this.stopTicking();
-        // foreground fallback: ring live if the scheduled chime's clock was frozen by music
-        if (missed) app._fireSeqNow(pomodoro.ALARMS[this.state.sound] || pomodoro.ALARMS[0]);
+        // Foreground: ring live (audible over music). Background: pre-scheduled chime already fired.
+        if (fg) app._ringNowSeq(pomodoro.ALARMS[this.state.sound] || pomodoro.ALARMS[0]);
         app.releaseWakeLock();
 
         if (!task) { this.render(); return; }
