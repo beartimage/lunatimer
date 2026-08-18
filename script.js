@@ -2326,21 +2326,6 @@ const timebox = {
         this.renderCount();
     },
 
-    // duplicate a task in the editor
-    duplicateTask(index) {
-        const t = this.state.tasks[index];
-        if (!t) return;
-        const copy = this._normTask({
-            name: t.name + ' copy', minutes: t.minutes, mode: t.mode, note: t.note,
-            subs: (t.subs || []).map(s => ({ text: s.text, done: false })),
-        });
-        this.state.tasks.splice(index + 1, 0, copy);
-        if (index < this.state.activeIndex) this.state.activeIndex += 1;
-        this.saveTasks();
-        this.renderEditList();
-        this.renderCount();
-    },
-
     // jump straight from the main task list into editing a specific task
     editFromList(index) {
         const t = this.state.tasks[index];
@@ -2424,11 +2409,6 @@ const timebox = {
                             <path d="M4 20h4L18.5 9.5a2 2 0 0 0-2.83-2.83L5 17.5V20z"/><path d="M14.5 8.5 16 10"/>
                         </svg>
                     </button>
-                    <button class="tb-copy-btn" title="Duplicate task" aria-label="Duplicate task">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 5.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h.5"/>
-                        </svg>
-                    </button>
                     <button class="tb-del tb-icon-btn" title="Delete task" aria-label="Delete task">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M4 7h16"/><path d="M9 7V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v2"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M10 11v6M14 11v6"/>
@@ -2436,7 +2416,6 @@ const timebox = {
                     </button>
                 </div>`;
             row.querySelector('.tb-edit-btn').onclick = () => this.editTask(i);
-            row.querySelector('.tb-copy-btn').onclick = () => this.duplicateTask(i);
             row.querySelector('.tb-del').onclick = () => this.deleteTask(i);
             row.querySelector('.tb-grip').addEventListener('pointerdown', (e) => this._dragStart(e));
             wrap.appendChild(row);
