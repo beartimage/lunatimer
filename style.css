@@ -1395,6 +1395,28 @@ body::before {
 .tb-copy-btn:active { transform: scale(0.94); background: rgba(66, 58, 36, 0.06); }
 .tb-copy-btn svg { display: block; }
 
+/* icon layout for Edit / Load / Delete buttons (keeps each button's accent color) */
+.tb-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    font-size: 0;
+    letter-spacing: 0;
+}
+.tb-icon-btn svg { display: block; }
+
+/* icon layout for meditation-preset Edit / Delete buttons */
+.p-btn.p-ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    font-size: 0;
+    letter-spacing: 0;
+}
+.p-btn.p-ico svg { display: block; }
+
 /* sub-task checklist on the running card */
 .tb-subs {
     margin-top: 12px;

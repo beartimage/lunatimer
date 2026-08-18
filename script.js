@@ -594,8 +594,16 @@ const app = {
                     <div class="p-sub">${this.fmtDur(durSec)}${intSec.length ? ' &bull; bells: ' + bells : ''}</div>
                 </div>
                 <div class="p-actions">
-                    <button class="p-btn" data-act="edit">Edit</button>
-                    <button class="p-btn danger" data-act="del">Delete</button>
+                    <button class="p-btn p-ico" data-act="edit" title="Edit preset" aria-label="Edit preset">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M4 20h4L18.5 9.5a2 2 0 0 0-2.83-2.83L5 17.5V20z"/><path d="M14.5 8.5 16 10"/>
+                        </svg>
+                    </button>
+                    <button class="p-btn danger p-ico" data-act="del" title="Delete preset" aria-label="Delete preset">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M4 7h16"/><path d="M9 7V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v2"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M10 11v6M14 11v6"/>
+                        </svg>
+                    </button>
                 </div>`;
             div.querySelector('.p-name').textContent = p.name;
             // tapping the body loads the preset into the timer
@@ -2297,13 +2305,21 @@ const timebox = {
                     <div class="tb-item-meta">${t.minutes} min · ${t.mode}${(t.subs && t.subs.length) ? ' · ' + t.subs.length + ' steps' : ''}${t.done ? ' · done' : ''}${t.skipped ? ' · skipped' : ''}${t.note ? ' · note' : ''}</div>
                 </div>
                 <div class="tb-edit-actions">
-                    <button class="tb-edit-btn">Edit</button>
+                    <button class="tb-edit-btn tb-icon-btn" title="Edit task" aria-label="Edit task">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M4 20h4L18.5 9.5a2 2 0 0 0-2.83-2.83L5 17.5V20z"/><path d="M14.5 8.5 16 10"/>
+                        </svg>
+                    </button>
                     <button class="tb-copy-btn" title="Duplicate task" aria-label="Duplicate task">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 5.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h.5"/>
                         </svg>
                     </button>
-                    <button class="tb-del">Delete</button>
+                    <button class="tb-del tb-icon-btn" title="Delete task" aria-label="Delete task">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M4 7h16"/><path d="M9 7V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v2"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M10 11v6M14 11v6"/>
+                        </svg>
+                    </button>
                 </div>`;
             row.querySelector('.tb-edit-btn').onclick = () => this.editTask(i);
             row.querySelector('.tb-copy-btn').onclick = () => this.duplicateTask(i);
@@ -2446,13 +2462,21 @@ const timebox = {
                     <div class="tb-item-meta">${r.tasks.length} tasks · ${this.fmtDur(mins)}</div>
                 </div>
                 <div class="tb-edit-actions">
-                    <button class="tb-edit-btn">Load</button>
+                    <button class="tb-edit-btn tb-icon-btn" title="Load routine" aria-label="Load routine">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 4v11"/><path d="M8.5 11.5 12 15l3.5-3.5"/><path d="M6 12v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6"/>
+                        </svg>
+                    </button>
                     <button class="tb-share-btn" title="Share routine" aria-label="Share routine">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M12 15V4"/><path d="M8.5 7.5 12 4l3.5 3.5"/><path d="M6 12v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6"/>
                         </svg>
                     </button>
-                    <button class="tb-del">Delete</button>
+                    <button class="tb-del tb-icon-btn" title="Delete routine" aria-label="Delete routine">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M4 7h16"/><path d="M9 7V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v2"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M10 11v6M14 11v6"/>
+                        </svg>
+                    </button>
                 </div>`;
             row.querySelector('.tb-edit-btn').onclick = () => this.loadRoutine(i);
             row.querySelector('.tb-share-btn').onclick = () => this.shareRoutine(i);
